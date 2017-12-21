@@ -1,3 +1,3 @@
-# Fastpress
+# Sashimi
 
-Fastpress is scala based front-end for Wordpress.
+Sashimi is scala based front-end for Wordpress.
