@@ -34,9 +34,23 @@ class SashimiRequestHandler(context: ServerContext, settings: SashimiSettings) e
     case request @ Get on Root / "hello" => {
       Callback.successful(request.ok("Hello World!"))
     }
+
     case request @ Get on Root / Integer(year) / Integer(month) / Integer(day) / postName => {
-      val result = settings.pageTemplate(WpRepository.getPost(year, month, day, postName))
-      Callback.successful(request.ok(result, HttpHeaders(HttpHeader("Content-Type", "text/html"))))
+      WpRepository.getPost(year, month, day, postName) match {
+        case Some(p) =>
+          Callback.successful(request.ok(settings.pageTemplate(p), HttpHeaders(HttpHeader("Content-Type", "text/html"))))
+        case None =>
+          Callback.successful(request.notFound("Not Found")) // TODO need template for 404
+      }
+    }
+
+    case request @ Get on Root / pageName => {
+      WpRepository.getPage(pageName) match {
+        case Some(p) =>
+          Callback.successful(request.ok(settings.pageTemplate(p), HttpHeaders(HttpHeader("Content-Type", "text/html"))))
+        case None =>
+          Callback.successful(request.notFound("Not Found")) // TODO need template for 404
+      }
     }
   }
 }
