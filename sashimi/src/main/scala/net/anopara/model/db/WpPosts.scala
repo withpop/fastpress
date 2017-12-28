@@ -1,6 +1,4 @@
-package net.anopara.model
-
-import java.math.BigInteger
+package net.anopara.model.db
 
 case class WpPosts(
                     Id: Long,

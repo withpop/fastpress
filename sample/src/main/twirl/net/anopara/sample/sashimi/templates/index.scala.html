@@ -1,0 +1,12 @@
+@import net.anopara.model.db.WpPosts
+@(post: WpPosts)
+
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <title>@(post.postTitle)</title>
+    </head>
+    <body>
+        <article>@Html(post.postContent)</article>
+    </body>
+</html>

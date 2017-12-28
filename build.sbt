@@ -33,6 +33,8 @@ lazy val sample = (project in file("sample"))
   .settings(
     name := "sashimi-sample",
     libraryDependencies += scalaTest % Test
-  ).dependsOn(sashimi)
+  )
+  .dependsOn(sashimi)
+  .enablePlugins(SbtTwirl)
 
 
