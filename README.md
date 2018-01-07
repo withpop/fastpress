@@ -1,3 +1,13 @@
 # Sashimi
 
-Sashimi is scala based front-end for Wordpress.
+Sashimi is lightweight CMS.
+
+# Performance 
+
+TODO
+
+# Installation
+
+TODO
+
+
