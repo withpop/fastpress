@@ -1,11 +1,13 @@
 package net.anopara.model.db
 
+import java.time.{LocalDate, LocalDateTime}
+
 import io.getquill._
 import net.anopara.model.SashimiCache
 import net.anopara.util.Serialization
 import redis.clients.jedis.{Jedis, JedisPool, JedisPoolConfig}
 
-class WpRepository(postCacheTime: Int) {
+class Repository(postCacheTime: Int) {
 
   val redisPool = new JedisPool(new JedisPoolConfig(), "localhost")
   val sashimiCache = new SashimiCache(postCacheTime)
@@ -13,17 +15,21 @@ class WpRepository(postCacheTime: Int) {
   val ctx = new MysqlJdbcContext(SnakeCase, "ctx")
   import ctx._
 
-  def getPost(year: Int, month: Int, day: Int, name: String): Option[WpPosts] = {
+  val date = quote {
+    (i: LocalDateTime) => infix"DATE($i)".as[LocalDate]
+  }
+
+  def getPost(pathName: String): Option[WpPosts] = {
     val q = quote {
-      query[WpPosts].filter(p => p.postName == lift(name) && p.postType == "post")
+      query[Post].filter(p => p.pathName == lift(pathName) && p.postType == "post")
     }
     ctx.run(q).headOption
   }
 
-  def getPage(pageName: String): Option[WpPosts] = {
-    sashimiCached(pageName) {
+  def getPage(pathName: String): Option[WpPosts] = {
+    sashimiCached(pathName) {
       val q = quote {
-        query[WpPosts].filter(p => p.postName == lift(pageName) && p.postType == "page")
+        query[WpPosts].filter(p => p.postName == lift(pathName) && p.postType == "page")
       }
       ctx.run(q).headOption
     }

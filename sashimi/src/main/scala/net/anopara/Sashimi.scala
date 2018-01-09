@@ -10,29 +10,35 @@ import colossus.protocols.http.{Http, HttpHeader, HttpHeaders, HttpServer, Initi
 import colossus.service.Callback
 import colossus.service.GenRequestHandler.PartialHandler
 import com.typesafe.config.ConfigFactory
+import io.undertow.server.handlers.PathHandler
+import io.undertow.{Handlers, Undertow}
+import io.undertow.server.handlers.resource.ClassPathResourceManager
+import io.undertow.util.Headers
 import net.anopara.model.asset.AssetsResource
-import net.anopara.model.db.WpRepository
+import net.anopara.model.db.Repository
 import net.anopara.model.{Renderer, SashimiSettings}
 import org.flywaydb.core.Flyway
 
 object Sashimi {
-
-  implicit val actorSystem = ActorSystem()
-  implicit val ioSystem    = IOSystem()
-
   def start(settings: SashimiSettings) = {
     val flyway = new Flyway()
     val config = ConfigFactory.load.getConfig("ctx.dataSource")
     flyway.setDataSource(config.getString("url"), config.getString("user"), config.getString("password"))
     flyway.migrate()
 
-    val repository = new WpRepository(settings.postCacheTime)
+    val repository = new Repository(settings.postCacheTime)
     val renderer = new Renderer(settings.pageTemplate)
-    val assets = new AssetsResource("/")
 
-    HttpServer.start("sashimi", settings.port) { context =>
-      new SashimiInitializer(context)(new SashimiRequestHandler(_, settings, repository, renderer, assets))
-    }
+    val server = Undertow.builder()
+      .addHttpListener(settings.port, "localhost")
+      .setHandler(Handlers.path()
+        .addPrefixPath("/assets", Handlers.resource(new ClassPathResourceManager(Thread.currentThread().getContextClassLoader, "static")))
+        .addExactPath("/", x => {
+          x.getResponseHeaders.put(Headers.CONTENT_TYPE, "text/plain")
+          x.getResponseSender.send("Hello")
+        })
+      ).build()
+    server.start()
   }
 }
 
@@ -42,7 +48,7 @@ class SashimiInitializer(context: InitContext)(handler: ServerContext => Sashimi
 
 class SashimiRequestHandler(context: ServerContext,
   settings: SashimiSettings,
-  repository: WpRepository,
+  repository: Repository,
   renderer: Renderer,
   assets: AssetsResource,
 ) extends RequestHandler(context) {

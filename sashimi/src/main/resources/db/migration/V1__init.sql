@@ -1,11 +1,12 @@
-CREATE TABLE post
+CREATE TABLE postpostName
 (
   id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
   title TEXT,
   content TEXT,
+  path_name VARCHAR(20) not null,
   status VARCHAR(10) not null,
-  auther int unsigned,
-  type VARCHAR(10),
+  author int unsigned,
+  post_type VARCHAR(10),
   created_at DATETIME not null DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -14,9 +15,9 @@ CREATE TABLE taxonomy
 (
   id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
   parent_id BIGINT UNSIGNED not null default '0',
-  title TEXT not null,
-  type VARCHAR(10) not null, /* menu, tag, category */
-  target_url TEXT
+  name TEXT not null,
+  taxo_type VARCHAR(10) not null, /* menu, tag, category */
+  link TEXT
 );
 
 CREATE TABLE post_taxonomy
