@@ -1,27 +1,42 @@
 package net.anopara.model
 
-import java.util.concurrent.ConcurrentHashMap
+import net.anopara.model.db.PostTaxonomyData
 
-import net.anopara.model.db.WpPosts
-import org.joda.time.DateTime
+import scala.concurrent.duration._
 
 class SashimiCache(expiredTimePostSec: Int) {
-  private[this] val map = new ConcurrentHashMap[String, CacheValue[WpPosts]]()
-  private[this] val expiredTimePostMillis = expiredTimePostSec * 1000
+  import scalacache._
+  import scalacache.caffeine._
+  import com.github.benmanes.caffeine.cache.Caffeine
 
-  class CacheValue[T](val value: T, val createdTime: Long = System.currentTimeMillis())
+  private val underlyingPostCache = Caffeine.newBuilder()
+    .maximumSize(10000L)
+    .build[String, Entry[PostTaxonomyData]]
+  private implicit val postCache: Cache[PostTaxonomyData] = CaffeineCache(underlyingPostCache)
 
+  private val underlyingRenderResultCache = Caffeine.newBuilder()
+    .maximumSize(10000L)
+    .build[String, Entry[String]]
+  private implicit val renderResultCache: Cache[String] = CaffeineCache(underlyingRenderResultCache)
 
-  def put(key: String, value: WpPosts) = {
-    map.put(key, new CacheValue[WpPosts](value))
-  }
-
-  def get(key: String): Option[WpPosts] = {
-    map.get(key) match {
-      case null => None
-      case x if (System.currentTimeMillis() - x.createdTime) > expiredTimePostMillis =>
-        None
-      case x => Some(x.value)
+  import scalacache.modes.sync._
+  def cachedPost(key: String)(fetchAction: => Option[PostTaxonomyData]): Option[PostTaxonomyData] =
+    postCache.get(key) match {
+      case None =>
+        fetchAction match {
+          case None => None
+          case Some(x) =>
+            postCache.caching(key)(ttl = Some(expiredTimePostSec.seconds))(x)
+            Some(x)
+        }
+      case x => x
     }
-  }
+
+  def cachedPostResult(relativePath: String)(fetchAction: => String): String =
+    renderResultCache.get(relativePath) match {
+      case None =>
+        renderResultCache.caching(relativePath)(ttl = Some(expiredTimePostSec.seconds))(fetchAction)
+        fetchAction
+      case Some(x) => x
+    }
 }

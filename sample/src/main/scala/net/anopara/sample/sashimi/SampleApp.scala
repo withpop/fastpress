@@ -7,6 +7,7 @@ import net.anopara.sample.sashimi.templates.html._
 object SampleApp extends App {
   Sashimi.start(new SashimiSettings(
     port = 9001,
-    pageTemplate = index.apply(_).body
+    pageTemplate = index.apply(_).body,
+    notFoundTemplate = s => s"not found: $s"
   ))
 }

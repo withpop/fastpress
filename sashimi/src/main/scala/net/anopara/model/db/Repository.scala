@@ -4,66 +4,59 @@ import java.time.{LocalDate, LocalDateTime}
 
 import io.getquill._
 import net.anopara.model.SashimiCache
-import net.anopara.util.Serialization
-import redis.clients.jedis.{Jedis, JedisPool, JedisPoolConfig}
 
-class Repository(postCacheTime: Int) {
-
-  val redisPool = new JedisPool(new JedisPoolConfig(), "localhost")
-  val sashimiCache = new SashimiCache(postCacheTime)
+class Repository(sashimiCache: SashimiCache) {
 
   val ctx = new MysqlJdbcContext(SnakeCase, "ctx")
   import ctx._
+
+  private[this] var menuCache = fetchMenu()
 
   val date = quote {
     (i: LocalDateTime) => infix"DATE($i)".as[LocalDate]
   }
 
-  def getPost(pathName: String): Option[WpPosts] = {
-    val q = quote {
-      query[Post].filter(p => p.pathName == lift(pathName) && p.postType == "post")
-    }
-    ctx.run(q).headOption
-  }
-
-  def getPage(pathName: String): Option[WpPosts] = {
-    sashimiCached(pathName) {
+  def getRenderData(pathName: String): Option[RenderDataSet] = {
+    val maybeElement = sashimiCache.cachedPost("post/" + pathName) {
       val q = quote {
-        query[WpPosts].filter(p => p.postName == lift(pathName) && p.postType == "page")
+        query[Post].filter(p => p.pathName == lift(pathName) && p.postType == "post")
       }
-      ctx.run(q).headOption
-    }
-  }
-
-  def sashimiCached(key: String)(fetchAction: => Option[WpPosts]): Option[WpPosts] = {
-    sashimiCache.get(key) match {
-      case None =>
-        fetchAction match {
-          case None => None
-          case Some(x) =>
-            sashimiCache.put(key, x)
-            Some(x)
-        }
-      case x => x
-    }
-  }
-
-  def redisCached[T](key: String)(fetchAction: => Option[T]): Option[T] = {
-    val redis = redisPool.getResource
-    val ret = if(redis.exists(key.getBytes))
-      Some(Serialization.deserialise[T](redis.get(key.getBytes)))
-    else {
-      fetchAction match {
-        case Some(x) =>
-          redis.set(key.getBytes, Serialization.serialise(x))
-          redis.expire(key, postCacheTime)
-          Some(x)
-
-        case None => None
+      val maybePost = ctx.run(q).headOption
+      maybePost.map{
+        p =>
+          val q = quote {
+            query[Taxonomy].join(query[PostTaxonomy]).on(_.id == _.taxonomyId)
+              .filter(_._2.postId == lift(p.id))
+              .map(_._1)
+          }
+          new PostTaxonomyData(p, ctx.run(q))
       }
     }
-    redis.close()
-    ret
+
+    maybeElement.map(pt => new RenderDataSet(pt.post, menuCache, pt.tags, pt.category))
+  }
+
+  def getMenu: List[Menu] = menuCache
+
+  private def fetchMenu(): List[Menu] = {
+    val q = quote {
+      for{
+        (t, pt) <- query[Taxonomy].join(query[PostTaxonomy]).on(_.id == _.taxonomyId)
+        p <- query[Post].leftJoin(_.id == pt.postId)
+      } yield (t, p)
+    }
+
+    val menus = ctx.run(q).map{case (t, p) =>
+      new Menu(t.id, t.parentId, t.name, t.link.fold(p.map( x => x.url ))(x => Some(x)))
+    }
+    val list = menus.filter(_.parentId == 0)
+    list.foreach{ t =>
+      list
+        .find(_.id == t.parentId)
+        .map(x => x.subMenu += t )
+    }
+
+    list
   }
 
 }

@@ -1,10 +1,11 @@
 package net.anopara.model
 
-import net.anopara.model.db.WpPosts
+import net.anopara.model.db.{Post, RenderDataSet}
 
 class SashimiSettings(
   val postCacheTime: Int = 60,
-  val pageTemplate: (WpPosts) => String,
+  val pageTemplate: (RenderDataSet) => String,
+  val notFoundTemplate: (String) => String,
   val port: Int = 9001,
 ) {
 
