@@ -33,3 +33,15 @@ CREATE TABLE post_taxonomy
   taxonomy_id BIGINT UNSIGNED not null default '0',
   PRIMARY KEY (post_id, taxonomy_id)
 )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE user
+(
+  id varchar(255) PRIMARY KEY ,
+  username varchar(255),
+  password varchar(255),
+  serialized_profile varchar(10000)
+);
+
+ALTER TABLE user
+  ADD PRIMARY KEY (id),
+  ADD KEY username (username);

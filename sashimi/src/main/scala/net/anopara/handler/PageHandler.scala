@@ -6,7 +6,7 @@ import io.undertow.util.Headers
 import net.anopara.model.{Renderer, SashimiCache, SashimiSettings}
 import net.anopara.model.db.Repository
 
-object PageHandler extends SashimiHandler {
+object PageHandler extends HandlerBase {
 
   def basicHandler(settings: SashimiSettings, repository: Repository, renderer: Renderer, cache: SashimiCache): HttpHandler = {
     Handlers.path()

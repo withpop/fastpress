@@ -7,6 +7,8 @@ class SashimiSettings(
   val pageTemplate: (RenderDataSet) => String,
   val notFoundTemplate: (String) => String,
   val port: Int = 9001,
+  val hostname: String = "localhost"
 ) {
-
+  val homeUrl: String = s"http://$hostname:$port/"
+  val loginUrl: String = homeUrl + "admin/login"
 }
