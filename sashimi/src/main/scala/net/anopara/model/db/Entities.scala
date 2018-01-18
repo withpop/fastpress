@@ -2,6 +2,8 @@ package net.anopara.model.db
 
 import java.time.LocalDateTime
 
+import net.anopara.model.SashimiSettings
+
 import scala.collection.mutable
 
 case class Post(
@@ -42,6 +44,16 @@ class PostTaxonomyData(
   lazy val category: Option[Category] = taxonomies.find(_.taxoType == "category").map(new Category(_))
 }
 
+class AdminPageDataSet(
+  val user: User,
+  val settings: SashimiSettings,
+  val attribute: mutable.HashMap[String, Any] = mutable.HashMap()
+) {
+  def addAttr(key: String, value: Any) = attribute += key -> value
+  def getAttrAs[T](key: String, value: Option[T]) = attribute.get(key).map(_.asInstanceOf[T])
+  def route(url: String) = settings.getUrl(url)
+}
+
 class RenderDataSet(
   val post: Post,
   val menus: List[Menu],
@@ -79,4 +91,14 @@ class Tag(
     this(taxonomy.id, taxonomy.name)
   }
   lazy val url: String = "/tag/" + name
+}
+
+case class User(
+  id: String,
+  userName: String,
+  password: String,
+  property: String
+) {
+  import io.circe._, io.circe.parser._
+  lazy val propertyJson: Json = parse(property).right.get // TODO error handling
 }

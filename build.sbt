@@ -27,6 +27,7 @@ lazy val root = Project(id = "root", base = file("."))
 
 lazy val sashimi = (project in file("sashimi"))
   .settings(commonSettings: _*)
+  .enablePlugins(SbtTwirl)
   .settings(
     name := "sashimi",
     mainClass in assembly := Some("net.anopara.sample.sashimi.SampleApp"),

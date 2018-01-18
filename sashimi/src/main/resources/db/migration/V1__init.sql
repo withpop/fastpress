@@ -37,11 +37,16 @@ CREATE TABLE post_taxonomy
 CREATE TABLE user
 (
   id varchar(255) PRIMARY KEY ,
-  username varchar(255),
+  user_name varchar(255),
   password varchar(255),
-  serialized_profile varchar(10000)
+  property varchar(10000)
 );
 
 ALTER TABLE user
-  ADD PRIMARY KEY (id),
-  ADD KEY username (username);
+  ADD KEY username (user_name);
+
+CREATE TABLE config
+(
+  name varchar(255) PRIMARY KEY,
+  value TEXT
+);

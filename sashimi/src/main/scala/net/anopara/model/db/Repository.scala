@@ -3,7 +3,9 @@ package net.anopara.model.db
 import java.time.{LocalDate, LocalDateTime}
 
 import io.getquill._
-import net.anopara.model.SashimiCache
+import net.anopara.model.PostType
+import net.anopara.model.service.SashimiCache
+import org.mindrot.jbcrypt.BCrypt
 
 class Repository(sashimiCache: SashimiCache) {
 
@@ -16,10 +18,30 @@ class Repository(sashimiCache: SashimiCache) {
     (i: LocalDateTime) => infix"DATE($i)".as[LocalDate]
   }
 
-  def getRenderData(pathName: String): Option[RenderDataSet] = {
+  def getUser(userid: String, pass: String): Option[User] = {
+    val q = quote {
+      query[User].filter(p => p.id == lift(userid))
+    }
+    ctx.run(q).headOption match {
+      case Some(user) if BCrypt.checkpw(pass, user.password) =>
+          Some(user)
+
+      case None =>
+        None
+    }
+  }
+
+  def addUser(user: User) = {
+    val q = quote {
+      query[User].insert(lift(user))
+    }
+    ctx.run(q)
+  }
+
+  def getRenderData(pathName: String, postType: PostType): Option[RenderDataSet] = {
     val maybeElement = sashimiCache.cachedPost("post/" + pathName) {
       val q = quote {
-        query[Post].filter(p => p.pathName == lift(pathName) && p.postType == "post")
+        query[Post].filter(p => p.pathName == lift(pathName) && p.postType == lift(postType.dbValue))
       }
       val maybePost = ctx.run(q).headOption
       maybePost.map{

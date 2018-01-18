@@ -1,0 +1,16 @@
+@import net.anopara.model.db.AdminPageDataSet
+@import net.anopara.sashimi.html._
+@(data: AdminPageDataSet)
+@main("Login", data) {
+    <div class="container">
+        <form class="form-signin" method="post" action="@data.route("/admin/login")">
+            <h2 class="form-signin-heading">Please sign in</h2>
+            <label for="userId" class="sr-only">User ID</label>
+            <input id="userId" class="form-control" placeholder="User Id" name="userId" required autofocus>
+            <label for="inputPassword" class="sr-only">Password</label>
+            <input type="password" id="inputPassword" class="form-control" placeholder="Password" required name="password">
+            <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
+        </form>
+
+    </div>
+}

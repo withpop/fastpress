@@ -1,13 +1,14 @@
-package net.anopara.model
+package net.anopara.model.service
 
 import net.anopara.model.db.PostTaxonomyData
 
 import scala.concurrent.duration._
 
 class SashimiCache(expiredTimePostSec: Int) {
+  import com.github.benmanes.caffeine.cache.Caffeine
+
   import scalacache._
   import scalacache.caffeine._
-  import com.github.benmanes.caffeine.cache.Caffeine
 
   private val underlyingPostCache = Caffeine.newBuilder()
     .maximumSize(10000L)

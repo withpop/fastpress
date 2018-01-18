@@ -1,6 +1,6 @@
-package net.anopara.model
+package net.anopara.model.service
 
-import net.anopara.model.db.{Post, RenderDataSet}
+import net.anopara.model.db.RenderDataSet
 import org.commonmark.parser.Parser
 import org.commonmark.renderer.html.HtmlRenderer
 

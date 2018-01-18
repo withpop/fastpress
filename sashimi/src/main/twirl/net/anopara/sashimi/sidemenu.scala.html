@@ -1,0 +1,42 @@
+@import net.anopara.model.db.AdminPageDataSet
+@import net.anopara.sashimi.html._
+@(ren:AdminPageDataSet)(content: Html)
+<div class="container-fluid">
+    <div class="row d-flex d-md-block flex-nowrap wrapper">
+        <div class="col-md-2 float-left col-1 pl-0 pr-0 collapse width show" id="sidebar">
+            <div class="list-group border-0 card text-center text-md-left">
+                <a href="@ren.route("/admin/new")" class="list-group-item d-inline-block collapsed" data-parent="#sidebar"><i class="fas fa-plus-square"></i> <span class="d-none d-md-inline">New</span></a>
+                <a href="@ren.route("/admin/posts")" class="list-group-item d-inline-block collapsed" data-parent="#sidebar"><i class="fas fa-newspaper"></i> <span class="d-none d-md-inline">Post</span></a>
+                <a href="@ren.route("/admin/pages")" class="list-group-item d-inline-block collapsed" data-parent="#sidebar"><i class="fas fa-file-alt"></i> <span class="d-none d-md-inline">Page</span></a>
+                <a href="@ren.route("/admin/uploads")" class="list-group-item d-inline-block collapsed" data-parent="#sidebar"><i class="fas fa-archive"></i> <span class="d-none d-md-inline">Upload Files</span></a>
+                <a href="#settings" class="list-group-item d-inline-block collapsed" data-toggle="collapse" data-parent="#sidebar" aria-expanded="false"><i class="fas fa-cog"></i> <span class="d-none d-md-inline">Settings</span></a>
+                <div class="collapse" id="settings">
+                    <a href="@ren.route("/admin/general")" class="list-group-item" data-parent="#settings">General</a>
+                    <a href="@ren.route("/admin/users")" class="list-group-item" data-parent="#settings">Users</a>
+                    <a href="@ren.route("/admin/menu")" class="list-group-item" data-parent="#settings">Menu</a>
+                    <a href="@ren.route("/admin/category")" class="list-group-item" data-parent="#settings">Category</a>
+                    <a href="@ren.route("/admin/tag")" class="list-group-item" data-parent="#settings">Tag</a>
+                </div>
+
+                <!-- <a href="#menu3" class="list-group-item d-inline-block collapsed" data-toggle="collapse" data-parent="#sidebar" aria-expanded="false"><i class="fa fa-book"></i> <span class="d-none d-md-inline">Item 3 </span></a>
+                <div class="collapse" id="menu3">
+                    <a href="#" class="list-group-item" data-parent="#menu3">3.1</a>
+                    <a href="#menu3sub2" class="list-group-item" data-toggle="collapse" aria-expanded="false">3.2 </a>
+                    <div class="collapse" id="menu3sub2">
+                        <a href="#" class="list-group-item" data-parent="#menu3sub2">3.2 a</a>
+                        <a href="#" class="list-group-item" data-parent="#menu3sub2">3.2 b</a>
+                        <a href="#" class="list-group-item" data-parent="#menu3sub2">3.2 c</a>
+                    </div>
+                    <a href="#" class="list-group-item" data-parent="#menu3">3.3</a>
+                </div>
+                <a href="#" class="list-group-item d-inline-block collapsed" data-parent="#sidebar"><i class="fa fa-heart"></i> <span class="d-none d-md-inline">Item 4</span></a> -->
+            </div>
+        </div>
+        <main class="col-md-10 float-left col px-5 pl-md-2 pt-2 main">
+            <a href="#" data-target="#sidebar" data-toggle="collapse"><i class="fa fa-bars fa-2x py-2 p-1"></i></a>
+            @content
+        </main>
+    </div>
+</div>
+
+
