@@ -23,10 +23,22 @@ lazy val root = Project(id = "root", base = file("."))
   .settings(noPubSettings: _*)
   .configs(IntegrationTest)
   .dependsOn(sashimi)
+  .disablePlugins(RevolverPlugin)
   .aggregate(sashimi, sample)
+
+
+lazy val sample = (project in file("sample"))
+  .settings(commonSettings: _*)
+  .settings(
+    name := "sashimi-sample",
+    libraryDependencies += scalaTest % Test
+  )
+  .dependsOn(sashimi)
+  .enablePlugins(SbtTwirl)
 
 lazy val sashimi = (project in file("sashimi"))
   .settings(commonSettings: _*)
+  .disablePlugins(RevolverPlugin)
   .enablePlugins(SbtTwirl)
   .settings(
     name := "sashimi",
@@ -38,13 +50,5 @@ lazy val sashimi = (project in file("sashimi"))
     )
   )
 
-lazy val sample = (project in file("sample"))
-  .settings(commonSettings: _*)
-  .settings(
-    name := "sashimi-sample",
-    libraryDependencies += scalaTest % Test
-  )
-  .dependsOn(sashimi)
-  .enablePlugins(SbtTwirl)
 
 

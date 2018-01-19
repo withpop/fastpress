@@ -1,0 +1,72 @@
+@import net.anopara.model.db.AdminPageDataSet
+@import net.anopara.sashimi.html._
+@(ren: AdminPageDataSet)
+@main("New", ren){
+    @sidemenu(ren){
+        <form >
+            <div class="page-header">
+                <div class="container-fluid">
+                    <h2>Add new post</h2>
+                    <div class="row">
+                        <div class="col-md-6"> <label>Post Type</label>
+                            <div class="btn-group btn-group-toggle" data-toggle="buttons"> <label class="btn btn-primary active">
+                                <input type="radio" name="options" id="option1" autocomplete="off" checked="" value="on"> Post
+                            </label> <label class="btn btn-primary">
+                                <input type="radio" name="options" id="option2" autocomplete="off" value="on"> Page
+                            </label> </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <form class="form-horizontal" method="post" action="https://formspree.io/">
+                                <div class="form-group"> <label>Title</label>
+                                    <input name="title" class="form-control" placeholder="Title"> </div>
+                                <div class="form-group"> <label>Permlink</label>
+                                    <input name="permlink" class="form-control" placeholder="Link path"> </div>
+                                <div class="form-group"> <label>Post date</label>
+                                    <input name="postDate" class="form-control"> </div>
+                                <div class="form-group"> <label>Status</label> <select type="" name="category" class="form-control" placeholder="Title"></select> </div>
+                            </form>
+                        </div>
+                        <div class="col-md-6">
+                            <form class="form-horizontal" method="post" action="https://formspree.io/">
+                                <div class="form-group"> <label>Menu</label> <select type="" name="menu" class="form-control" placeholder="Title"></select> </div>
+                                <div class="form-group"> <label>Category</label> <select type="" name="category" class="form-control" placeholder="Title"></select> </div>
+                                <div class="form-group"> <label>Tag</label>
+                                    <input name="tags" class="form-control" placeholder="Link path"> </div>
+
+                            </form>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group text-right">
+                                <button class="btn btn-primary" type="button">Save</button>
+                                <button class="btn btn-info" type="button">Preview</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <hr>
+
+            <style type="text/css" media="screen">
+            </style>
+            <div class="container-fluid">
+                <div class="panel panel-default">
+                    <div class="panel-body">
+                        <textarea></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <link rel="stylesheet" href="@ren.route("/assets/sashimi/ext/sparksuite-simplemde-markdown-editor-6abda7a/dist/simplemde.min.css")">
+            <script src="@ren.route("/assets/sashimi/ext/sparksuite-simplemde-markdown-editor-6abda7a/dist/simplemde.min.js")" type="text/javascript" charset="utf-8"></script>
+            <script>
+                    var simplemde = new SimpleMDE({
+                        spellChecker: false
+                    });
+            </script>
+        </form>
+    }
+}

@@ -9,16 +9,13 @@ import net.anopara.model.SashimiSettings
 import net.anopara.model.db.{AdminPageDataSet, Repository, User}
 import net.anopara.model.service.AuthService
 import net.anopara.sashimi.html._
+import play.twirl.api.{Html, HtmlFormat}
 
 class AdminPageHandler(
   settings: SashimiSettings,
   auth: AuthService,
   repo: Repository
 ) extends HandlerBase {
-
-  private[this] val indexPageHandler: HttpHandler = authenticated{ (ex, user) =>
-    setResponse(ex, admintop(new AdminPageDataSet(user, settings)).body)
-  }
 
   private[this] val loginPageHandler: HttpHandler = ex => {
     setResponse(ex, login(new AdminPageDataSet(User("dummy", "dummy", "dummy", "dummy"), settings)).body)
@@ -56,9 +53,10 @@ class AdminPageHandler(
 
   val handler: HttpHandler = {
     val handler = Handlers.routing()
-      .get("/", indexPageHandler)
+      .get("/", handlerForTemplate(admintop.apply))
       .get("/login", loginPageHandler)
       .get("/logout", logoutHandler)
+      .get("/new", handlerForTemplate(newPost.apply))
       .post("/login", formParsed(loginFormHandler))
 
     import io.undertow.server.session.InMemorySessionManager
@@ -76,6 +74,10 @@ class AdminPageHandler(
         .addParsers(new FormEncodedDataDefinition())
         .build()
     ).setNext(handler)
+  }
+
+  private def handlerForTemplate(template: AdminPageDataSet => HtmlFormat.Appendable): HttpHandler = authenticated{ (ex, user) =>
+    setResponse(ex, template(new AdminPageDataSet(user, settings)).body)
   }
 
   private def authenticated(block: (HttpServerExchange, User) => Unit): HttpHandler = ex => {

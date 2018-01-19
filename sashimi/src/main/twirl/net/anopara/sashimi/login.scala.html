@@ -9,8 +9,21 @@
             <input id="userId" class="form-control" placeholder="User Id" name="userId" required autofocus>
             <label for="inputPassword" class="sr-only">Password</label>
             <input type="password" id="inputPassword" class="form-control" placeholder="Password" required name="password">
+            <input type="hidden" name="redirect" value="">
             <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
         </form>
+        <script type="application/javascript">
+                function getParameterByName(name, url) {
+                    if (!url) url = window.location.href;
+                    name = name.replace(/[\[\]]/g, "\\$&");
+                    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+                            results = regex.exec(url);
+                    if (!results) return null;
+                    if (!results[2]) return '';
+                    return decodeURIComponent(results[2].replace(/\+/g, " "));
+                }
+                document.getElementsByName("redirect")[0].value = getParameterByName("redirect");
+        </script>
 
     </div>
 }
