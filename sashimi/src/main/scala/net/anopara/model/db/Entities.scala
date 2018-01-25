@@ -1,7 +1,9 @@
 package net.anopara.model.db
 
-import java.time.LocalDateTime
+import java.time.{Instant, LocalDateTime, ZoneId}
 
+import io.circe.Decoder.Result
+import io.circe.{Decoder, Encoder, HCursor, Json}
 import net.anopara.model.SashimiSettings
 
 import scala.collection.mutable
@@ -14,12 +16,27 @@ case class Post(
   status: String,
   author: String,
   postType: String,
+  attribute: String,
   createdAt: LocalDateTime,
   updatedAt: LocalDateTime
 ) {
+  implicit val TimestampFormat : Encoder[LocalDateTime] with Decoder[LocalDateTime] =
+    new Encoder[LocalDateTime] with Decoder[LocalDateTime] {
+    override def apply(a: LocalDateTime): Json =
+      Encoder.encodeLong.apply(a.atZone(ZoneId.systemDefault()).toInstant.toEpochMilli)
+    override def apply(c: HCursor): Result[LocalDateTime] =
+      Decoder.decodeLong.map(s => Instant.ofEpochMilli(s)
+        .atZone(ZoneId.systemDefault()).toLocalDateTime).apply(c)
+  }
+
   lazy val url: String = postType match {
     case "post" => "/post/" + pathName
     case "page" => "/page/" + pathName
+  }
+  def toJsonString: String = {
+    import io.circe.syntax._, io.circe.generic.semiauto._
+    implicit val fooEncoder: Encoder[Post] = deriveEncoder[Post]
+    this.asJson.toString()
   }
 }
 

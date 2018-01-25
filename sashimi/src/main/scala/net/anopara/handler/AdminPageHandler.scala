@@ -1,12 +1,14 @@
 package net.anopara.handler
 
+import java.time.LocalDateTime
+
 import io.undertow.Handlers
 import io.undertow.server.handlers.form._
 import io.undertow.server.session.{Session, SessionAttachmentHandler}
 import io.undertow.server.{HttpHandler, HttpServerExchange, RoutingHandler}
 import io.undertow.util.{Headers, Sessions, StatusCodes}
 import net.anopara.model.SashimiSettings
-import net.anopara.model.db.{AdminPageDataSet, Repository, User}
+import net.anopara.model.db.{AdminPageDataSet, Post, Repository, User}
 import net.anopara.model.service.AuthService
 import net.anopara.sashimi.html._
 import play.twirl.api.{Html, HtmlFormat}
@@ -31,6 +33,21 @@ class AdminPageHandler(
     redirect(ex, settings.loginUrl)
   }
 
+  private[this] val newPostHandler: HttpHandler = authenticated{ (ex, user) =>
+    setResponse(ex, newPost(new AdminPageDataSet(user, settings), Post(
+      id = -1,
+      title = "",
+      content = "",
+      pathName = "",
+      status = "draft",
+      author = user.userName,
+      postType = "post",
+      attribute = "",
+      createdAt = LocalDateTime.now(),
+      updatedAt = LocalDateTime.now()
+    )).body)
+  }
+
   private[this] val loginFormHandler: HttpHandler = ex => {
     val session = Sessions.getOrCreateSession(ex)
     val form = ex.getAttachment(FormDataParser.FORM_DATA)
@@ -40,11 +57,13 @@ class AdminPageHandler(
       user <- auth.authenticate(u, p, session.getId)
     } yield user
     val redirectUrl = Option(form.getFirst("redirect"))
-      .map(_.getValue)
-      .getOrElse(settings.getUrl("/admin/"))
+      .map(_.getValue) match {
+      case None | Some("") => settings.getUrl("/admin/")
+      case Some(x) => x
+    }
 
     maybeUser match {
-      case Some(x) =>
+      case Some(_) =>
         redirect(ex, redirectUrl)
       case None =>
         redirect(ex, settings.loginUrl(redirectUrl, "not_match"))
@@ -56,7 +75,7 @@ class AdminPageHandler(
       .get("/", handlerForTemplate(admintop.apply))
       .get("/login", loginPageHandler)
       .get("/logout", logoutHandler)
-      .get("/new", handlerForTemplate(newPost.apply))
+      .get("/new", newPostHandler)
       .post("/login", formParsed(loginFormHandler))
 
     import io.undertow.server.session.InMemorySessionManager

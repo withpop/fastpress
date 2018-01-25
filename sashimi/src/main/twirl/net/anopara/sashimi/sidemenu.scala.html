@@ -3,42 +3,37 @@
 @(ren:AdminPageDataSet)(content: Html)
 <div class="wrapper">
     <nav id="sidebar">
-        <div class="sidebar-header">
-            <h3>Menu</h3>
+        <div id="sidebar-inner">
+            <div class="sidebar-header">
+                <h3>Menu</h3>
+            </div>
+
+            <ul class="list-unstyled components">
+                <li>
+                    <a href="@ren.route("/admin/new")">New</a>
+                    <a href="@ren.route("/admin/posts-list")">Posts list</a>
+                    <a href="@ren.route("/admin/uploads")">Uploads</a>
+                </li>
+
+                <li class="active">
+                    <a href="#settingSubmenu" data-toggle="collapse" aria-expanded="false">Settings</a>
+                    <ul class="collapse list-unstyled" id="settingSubmenu">
+                        <li><a href="@ren.route("/admin/general")">General</a></li>
+                        <li><a href="@ren.route("/admin/users")">Users</a></li>
+                        <li><a href="@ren.route("/admin/menu")">Menu</a></li>
+                        <li><a href="@ren.route("/admin/category")">Category</a></li>
+                        <li><a href="@ren.route("/admin/tag")">Tag</a></li>
+                    </ul>
+                </li>
+            </ul>
         </div>
-
-        <ul class="list-unstyled components">
-            <li>
-                <a href="@ren.route("/admin/new")">New</a>
-                <a href="@ren.route("/admin/posts-list")">Posts list</a>
-                <a href="@ren.route("/admin/uploads")">Uploads</a>
-            </li>
-
-            <li class="active">
-                <a href="#settingSubmenu" data-toggle="collapse" aria-expanded="false">Settings</a>
-                <ul class="collapse list-unstyled" id="settingSubmenu">
-                    <li><a href="@ren.route("/admin/general")">General</a></li>
-                    <li><a href="@ren.route("/admin/users")">Users</a></li>
-                    <li><a href="@ren.route("/admin/menu")">Menu</a></li>
-                    <li><a href="@ren.route("/admin/category")">Category</a></li>
-                    <li><a href="@ren.route("/admin/tag")">Tag</a></li>
-                </ul>
-            </li>
-        </ul>
     </nav>
 
+    <button type="button" id="sidebarCollapse" class="btn btn-info fa-lg">
+        <i class="fa fa-caret-left"></i>
+    </button>
     <div id="content">
-        <nav class="navbar navbar-default">
-            <div class="container-fluid">
-                <div class="navbar-header">
-                    <button type="button" id="sidebarCollapse" class="btn btn-info navbar-btn">
-                        <i class="glyphicon glyphicon-align-left"></i>
-                        <span>Toggle Sidebar</span>
-                    </button>
-                </div>
-            </div>
-        </nav>
-        @content
+    @content
     </div>
 </div>
 

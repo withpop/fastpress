@@ -1,8 +1,4 @@
-/*
-    DEMO STYLE
-*/
 @import "https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700";
-
 
 body {
     font-family: 'Poppins', sans-serif;
@@ -166,4 +162,23 @@ a.article, a.article:hover {
     #sidebarCollapse span {
         display: none;
     }
+}
+
+#sidebarCollapse {
+    border-radius: 0;
+    padding: .3em;
+}
+
+
+#sidebar-inner {
+    position: fixed;
+    width: 250px;
+}
+
+.el-date-editor {
+    display: block;
+}
+
+.el-select {
+    display: block;
 }

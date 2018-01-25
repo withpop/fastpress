@@ -7,6 +7,7 @@ CREATE TABLE post
   status VARCHAR(10) not null,
   author int unsigned,
   post_type VARCHAR(10),
+  attribute VARCHAR(50),
   created_at DATETIME not null DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME not null DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX path_name_idx(path_name),
