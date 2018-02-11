@@ -2,28 +2,74 @@
 @import net.anopara.sashimi.html._
 @(data: AdminPageDataSet)
 @main("Login", data) {
-    <div class="container">
-        <form class="form-signin" method="post" action="@data.route("/admin/login")">
-            <h2 class="form-signin-heading">Please sign in</h2>
-            <label for="userId" class="sr-only">User ID</label>
-            <input id="userId" class="form-control" placeholder="User Id" name="userId" required autofocus>
-            <label for="inputPassword" class="sr-only">Password</label>
-            <input type="password" id="inputPassword" class="form-control" placeholder="Password" required name="password">
-            <input type="hidden" name="redirect" value="">
-            <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
-        </form>
-        <script type="application/javascript">
-                function getParameterByName(name, url) {
-                    if (!url) url = window.location.href;
-                    name = name.replace(/[\[\]]/g, "\\$&");
-                    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
-                            results = regex.exec(url);
-                    if (!results) return null;
-                    if (!results[2]) return '';
-                    return decodeURIComponent(results[2].replace(/\+/g, " "));
-                }
-                document.getElementsByName("redirect")[0].value = getParameterByName("redirect");
-        </script>
+    <div class="container py-5">
+        <div class="row">
+            <div class="col-md-12">
+                <style>
+                    #logo-container{
+                        width: 400px;
+                        margin: 20px auto;
+                        padding: 100px 0;
+                        background-image: url(http://localhost:9001/assets/sashimi/img/sashimi-689148_960_720.jpg);
+                        background-size: cover;
+                        box-shadow: 0 0 20px -5px rgba(0, 0, 0, 0.9);
+                    }
+                    #logo{
+                        display: inline-block;
+                        color: white;
+                        font-family: Arial, Helvetica, sans-serif;
+                        font-size: 30px;
+                        height: auto;
+                        line-height: 1;
+                        margin: 0;
+                        text-decoration: initial;
+                        padding: 0;
+                        text-shadow: 0 0 6px white;
+                    }
+                </style>
+                <div class="text-center" id="logo-container">
+                    <h2 class="text-center" id="logo">S A S H I M I</h2>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mx-auto">
+                        <span class="anchor" id="formLogin"></span>
 
+                        <div class="card rounded-0">
+                            <div class="card-header">
+                                <h3 class="mb-0">Login</h3>
+                            </div>
+                            <div class="card-body">
+                                <form class="form" role="form" method="post" action="@data.route("/admin/login")">
+                                    <div class="form-group">
+                                        <label for="userId">Username</label>
+                                        <input type="text" class="form-control form-control-lg rounded-0" name="userId" id="userId" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Password</label>
+                                        <input type="password" class="form-control form-control-lg rounded-0" id="password" name="password" required>
+                                    </div>
+                                    <input type="hidden" name="redirect" value="">
+                                    <button class="btn btn-success btn-lg float-right">Login</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+    <script type="application/javascript">
+            function getParameterByName(name, url) {
+                if (!url) url = window.location.href;
+                name = name.replace(/[\[\]]/g, "\\$&");
+                var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+                        results = regex.exec(url);
+                if (!results) return null;
+                if (!results[2]) return '';
+                return decodeURIComponent(results[2].replace(/\+/g, " "));
+            }
+            document.getElementsByName("redirect")[0].value = getParameterByName("redirect");
+    </script>
+
+
 }

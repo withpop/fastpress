@@ -8,7 +8,7 @@ import io.undertow.server.session.{Session, SessionAttachmentHandler}
 import io.undertow.server.{HttpHandler, HttpServerExchange, RoutingHandler}
 import io.undertow.util.{Headers, Sessions, StatusCodes}
 import net.anopara.model.SashimiSettings
-import net.anopara.model.db.{AdminPageDataSet, Post, Repository, User}
+import net.anopara.model.db._
 import net.anopara.model.service.AuthService
 import net.anopara.sashimi.html._
 import play.twirl.api.{Html, HtmlFormat}
@@ -34,7 +34,7 @@ class AdminPageHandler(
   }
 
   private[this] val newPostHandler: HttpHandler = authenticated{ (ex, user) =>
-    setResponse(ex, newPost(new AdminPageDataSet(user, settings), Post(
+    val post = Post(
       id = -1,
       title = "",
       content = "",
@@ -45,7 +45,36 @@ class AdminPageHandler(
       attribute = "",
       createdAt = LocalDateTime.now(),
       updatedAt = LocalDateTime.now()
-    )).body)
+    )
+    val render = new RenderDataSet(post, List.empty, List.empty, None)
+    setResponse(ex, newPost(new AdminPageDataSet(user, settings), render, repo.getTags, repo.getCategories).body)
+  }
+
+  private[this] val editPostHandler: HttpHandler = authenticated{ (ex, user) =>
+    val id = ex.getPathParameters.get("postId").peekFirst().toInt
+    repo.getRenderDataNonCache(id) match {
+      case None =>
+        setResponse(ex, "no such post", StatusCodes.NOT_FOUND)
+      case Some(render) =>
+        setResponse(ex, newPost(new AdminPageDataSet(user, settings), render, repo.getTags, repo.getCategories).body)
+    }
+  }
+
+  private[this] val savePostHandler: HttpHandler = authenticated{ (ex, user) => // todo
+    val post = Post(
+      id = -1,
+      title = "",
+      content = "",
+      pathName = "",
+      status = "draft",
+      author = user.userName,
+      postType = "post",
+      attribute = "",
+      createdAt = LocalDateTime.now(),
+      updatedAt = LocalDateTime.now()
+    )
+    val render = new RenderDataSet(post, List.empty, List.empty, None)
+    setResponse(ex, newPost(new AdminPageDataSet(user, settings), render, repo.getTags, repo.getCategories).body)
   }
 
   private[this] val loginFormHandler: HttpHandler = ex => {
@@ -76,6 +105,8 @@ class AdminPageHandler(
       .get("/login", loginPageHandler)
       .get("/logout", logoutHandler)
       .get("/new", newPostHandler)
+      .get("/edit/{postId}", editPostHandler)
+      .post("/edit", savePostHandler)
       .post("/login", formParsed(loginFormHandler))
 
     import io.undertow.server.session.InMemorySessionManager

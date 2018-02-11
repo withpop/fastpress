@@ -13,6 +13,8 @@ class Repository(sashimiCache: SashimiCache) {
   import ctx._
 
   private[this] var menuCache = fetchMenu()
+  private[this] var tagCache = fetchTag()
+  private[this] var categoryCache = fetchCategory()
 
   val date = quote {
     (i: LocalDateTime) => infix"DATE($i)".as[LocalDate]
@@ -38,6 +40,33 @@ class Repository(sashimiCache: SashimiCache) {
     ctx.run(q)
   }
 
+  def getPost(postId: Int): Option[Post] = {
+    val q = quote {
+      query[Post].filter(_.id == lift(postId))
+    }
+    ctx.run(q).headOption
+  }
+
+  def getRenderDataNonCache(postId: Int): Option[RenderDataSet] = {
+    val maybeElement = {
+      val q = quote {
+        query[Post].filter(p => p.id == lift(postId))
+      }
+      val maybePost = ctx.run(q).headOption
+      maybePost.map{
+        p =>
+          val q = quote {
+            query[Taxonomy].join(query[PostTaxonomy]).on(_.id == _.taxonomyId)
+              .filter(_._2.postId == lift(p.id))
+              .map(_._1)
+          }
+          new PostTaxonomyData(p, ctx.run(q))
+      }
+    }
+    maybeElement.map(pt => new RenderDataSet(pt.post, menuCache, pt.tags, pt.category))
+  }
+
+
   def getRenderData(pathName: String, postType: PostType): Option[RenderDataSet] = {
     val maybeElement = sashimiCache.cachedPost("post/" + pathName) {
       val q = quote {
@@ -59,6 +88,14 @@ class Repository(sashimiCache: SashimiCache) {
   }
 
   def getMenu: List[Menu] = menuCache
+  def getTags: List[Tag] = tagCache
+  def getCategories: List[Category] = categoryCache
+
+  def refreshTaxonomy(): Unit ={
+    menuCache = fetchMenu()
+    tagCache = fetchTag()
+    categoryCache = fetchCategory()
+  }
 
   private def fetchMenu(): List[Menu] = {
     val q = quote {
@@ -79,6 +116,20 @@ class Repository(sashimiCache: SashimiCache) {
     }
 
     list
+  }
+
+  private def fetchTag(): List[Tag] = {
+    val q = quote {
+      query[Taxonomy].filter(_.taxoType == "tag")
+    }
+    ctx.run(q).map( x => new Tag(x.id, x.name))
+  }
+
+  private def fetchCategory(): List[Category] = {
+    val q = quote {
+      query[Taxonomy].filter(_.taxoType == "category")
+    }
+    ctx.run(q).map( x => new Category(x.id, x.name))
   }
 
 }

@@ -1,10 +1,9 @@
-@import net.anopara.model.db.AdminPageDataSet
-@import net.anopara.model.db.Post
+@import net.anopara.model.db._
 @import net.anopara.sashimi.html._
 @import play.twirl.api.Html
-@(ren: AdminPageDataSet, post: Post)
-@main("New Post", ren){
-    @sidemenu(ren){
+@(admin: AdminPageDataSet, ren: RenderDataSet, tags: List[Tag], categories: List[Category])
+@main("New Post", admin){
+    @sidemenu(admin){
         <div id="vue-app">
             <div class="container-fluid">
                 <div class="row">
@@ -35,9 +34,9 @@
                             <el-select v-model="categories.selected" required>
                                 <el-option
                                 v-for="item in categories.list"
-                                :key="item"
-                                :label="item"
-                                :value="item">
+                                :label="item.name"
+                                :value="item.id"
+                                :key="item.id">
                                 </el-option>
                             </el-select>
                         </div>
@@ -59,9 +58,13 @@
                         data-toggle="collapse" data-target="#advanced"
                         aria-expanded="false" aria-controls="advanced">Advanced</button>
                     </div>
-                    <div class="col-md-6">
-                        <div class="form-group text-right">
-                            <button class="btn btn-primary" type="button">Save</button>
+                    <div class="col-md-4">
+                        <div class="alert alert-success" id="message" style="display: none">{{message}}</div>
+                    </div>
+                    <div class="col-md-2 text-right">
+                        <div class="btn-group">
+                            <button class="btn btn-info" type="button" v-on:click="preview">Preview</button>
+                            <button class="btn btn-primary" type="button" v-on:click="save">Save</button>
                         </div>
                     </div>
                 </div>
@@ -69,7 +72,7 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group"> <label>Attribute</label>
-                                <input name="attribute" class="form-control"> </div>
+                                <input name="attribute" class="form-control" v-model="attribute"> </div>
                         </div>
                     </div>
                 </div>
@@ -82,38 +85,73 @@
         <div class="container-fluid">
             <div class="panel panel-default">
                 <div class="panel-body">
-                    <textarea></textarea>
+                    <textarea>@ren.post.content</textarea>
                 </div>
             </div>
         </div>
 
-        <link rel="stylesheet" href="@ren.route("/assets/sashimi/ext/sparksuite-simplemde-markdown-editor-6abda7a/dist/simplemde.min.css")">
-        <script src="@ren.route("/assets/sashimi/ext/sparksuite-simplemde-markdown-editor-6abda7a/dist/simplemde.min.js")" type="text/javascript" charset="utf-8"></script>
+        <link rel="stylesheet" href="@admin.route("/assets/sashimi/ext/sparksuite-simplemde-markdown-editor-6abda7a/dist/simplemde.min.css")">
+        <script src="@admin.route("/assets/sashimi/ext/sparksuite-simplemde-markdown-editor-6abda7a/dist/simplemde.min.js")" type="text/javascript" charset="utf-8"></script>
         <script>
-                const simplemde = new SimpleMDE({
-                    spellChecker: false,
-                    autoDownloadFontAwesome: false
-                });
-                let post = JSON.parse(`@Html(post.toJsonString)`);
-                post.form = {};
-                post.form.createdAt = new Date(post.createdAt);
-                post.form.updatedAt = new Date(post.updatedAt);
+            const simplemde = new SimpleMDE({
+                spellChecker: false,
+                autoDownloadFontAwesome: false
+            });
+            let post = JSON.parse(`@Html(ren.post.toJsonString)`);
+            post.form = {};
+            post.form.createdAt = new Date(post.createdAt);
+            post.form.updatedAt = new Date(post.updatedAt);
+            post.message = "";
 
-                // TODO
-                post.categories = {
-                    list : ["a", "b", "c"],
-                    selected : "b"
-                };
+            post.categories = {
+                list : JSON.parse(`@Html(categories.map(_.toJsonString).mkString("[", ",", "]"))`),
+                selected : "@ren.category.map(_.id)"
+            };
 
-                // TODO
-                post.tags = {
-                    list : ["#aaa", "#bbb", "#ccc"],
-                    selected : ["#bbb", "#ccc"]
-                };
-                let vm = new Vue({
-                    el: "#vue-app",
-                    data: post
-                });
+            // TODO
+            post.tags = {
+                list: JSON.parse(`@Html(tags.map(_.toVSelectJsonString).mkString("[", ",", "]"))`),
+                selected : @if(ren.tags.isEmpty) { [] } else { @ren.tags.map(_.id).mkString(",") }
+            };
+            let vm = new Vue({
+                el: "#vue-app",
+                data: post,
+                watch: {
+                    message: (newMsg, oldMsg) => {
+                        this.message = newMsg;
+                        if(newMsg !== ""){
+                            $("#message").fadeIn();
+                            setTimeout(() => {
+                                $("#message").fadeOut(400, () => { post.message = ""; });
+                            }, 4000);
+                        }
+                    }
+                },
+                methods: {
+                    save: (context) => {
+                        let saveObj = {};
+                        saveObj.title = post.title;
+                        saveObj.category = post.categories.selected;
+                        saveObj.pathName = post.pathName;
+                        saveObj.tags = post.tags.selected.map(t => {
+                            if(t.value)
+                                return t.value;
+                            else
+                                return t.label;
+                        });
+                        saveObj.createdAt = post.form.createdAt.getSeconds();
+                        saveObj.status = post.status;
+                        saveObj.attribute = post.attribute;
+                        saveObj.body = simplemde.value();
+
+                        console.log(saveObj);
+                        post.message = "Saved.";
+                    },
+                    preview: (context) => {
+                        console.log(context);
+                    }
+                }
+            });
         </script>
     }
 }

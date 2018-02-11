@@ -7,7 +7,7 @@
         <meta charset="UTF-8" />
         <title>@title</title>
         <link rel="stylesheet" media="screen" href="@ren.route("/assets/sashimi/ext/bootstrap/css/bootstrap.min.css")">
-        <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+        <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
         <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
         <link rel="stylesheet" media="screen" href="@ren.route("/assets/sashimi/css/sashimi.css")">
 
@@ -22,6 +22,8 @@
             ELEMENT.locale(ELEMENT.lang.en);
             Vue.component('v-select', VueSelect.VueSelect);
         </script>
+
+        <script src="//unpkg.com/axios/dist/axios.min.js"></script>
     </head>
     <body>
         @content

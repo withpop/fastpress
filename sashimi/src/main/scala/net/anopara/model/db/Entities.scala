@@ -3,6 +3,7 @@ package net.anopara.model.db
 import java.time.{Instant, LocalDateTime, ZoneId}
 
 import io.circe.Decoder.Result
+import io.circe.generic.semiauto.deriveEncoder
 import io.circe.{Decoder, Encoder, HCursor, Json}
 import net.anopara.model.SashimiSettings
 
@@ -90,24 +91,40 @@ class Menu(
   }
 }
 
-class Category(
-  val id: Long,
-  val name: String
+case class Category(
+  id: Long,
+  name: String
 ) {
   def this(taxonomy: Taxonomy){
     this(taxonomy.id, taxonomy.name)
   }
   lazy val url: String = "/category/" + name
+
+  def toJsonString: String = {
+    import io.circe.syntax._, io.circe.generic.semiauto._
+    implicit val fooEncoder: Encoder[Category] = deriveEncoder[Category]
+    this.asJson.toString()
+  }
 }
 
-class Tag(
-  val id: Long,
-  val name: String
+case class Tag(
+  id: Long,
+  name: String
 ) {
   def this(taxonomy: Taxonomy){
     this(taxonomy.id, taxonomy.name)
   }
   lazy val url: String = "/tag/" + name
+
+  def toJsonString: String = {
+    import io.circe.syntax._, io.circe.generic.semiauto._
+    implicit val fooEncoder: Encoder[Tag] = deriveEncoder[Tag]
+    this.asJson.toString()
+  }
+
+  def toVSelectJsonString: String = {
+    s"""{"label": "$name","value":$id}"""
+  }
 }
 
 case class User(
