@@ -6,8 +6,9 @@ import io.undertow.Handlers
 import io.undertow.server.handlers.form._
 import io.undertow.server.session.{Session, SessionAttachmentHandler}
 import io.undertow.server.{HttpHandler, HttpServerExchange, RoutingHandler}
-import io.undertow.util.{Headers, Sessions, StatusCodes}
+import io.undertow.util.{Headers, PathTemplateMatch, Sessions, StatusCodes}
 import net.anopara.model.SashimiSettings
+import net.anopara.model.console.SavingData
 import net.anopara.model.db._
 import net.anopara.model.service.AuthService
 import net.anopara.sashimi.html._
@@ -35,7 +36,7 @@ class AdminPageHandler(
 
   private[this] val newPostHandler: HttpHandler = authenticated{ (ex, user) =>
     val post = Post(
-      id = -1,
+      id = 0,
       title = "",
       content = "",
       pathName = "",
@@ -43,6 +44,7 @@ class AdminPageHandler(
       author = user.userName,
       postType = "post",
       attribute = "",
+      postedAt = LocalDateTime.now(),
       createdAt = LocalDateTime.now(),
       updatedAt = LocalDateTime.now()
     )
@@ -60,21 +62,35 @@ class AdminPageHandler(
     }
   }
 
-  private[this] val savePostHandler: HttpHandler = authenticated{ (ex, user) => // todo
-    val post = Post(
-      id = -1,
-      title = "",
-      content = "",
-      pathName = "",
-      status = "draft",
-      author = user.userName,
-      postType = "post",
-      attribute = "",
-      createdAt = LocalDateTime.now(),
-      updatedAt = LocalDateTime.now()
-    )
-    val render = new RenderDataSet(post, List.empty, List.empty, None)
-    setResponse(ex, newPost(new AdminPageDataSet(user, settings), render, repo.getTags, repo.getCategories).body)
+  private[this] val savePostHandler: HttpHandler = authenticated{ (ex, user) =>
+    ex.getRequestReceiver.receiveFullString{
+      (ex2: HttpServerExchange, message: String) =>
+        SavingData.parseFrom(message) match {
+        case None => setResponse(ex2, "save failed", StatusCodes.BAD_REQUEST)
+        case Some(data) =>
+          repo.savePost(data)
+          setResponse(ex2, "save succeed", StatusCodes.OK)
+      }
+    }
+  }
+
+  private[this] val updatePostHandler: HttpHandler = authenticated{ (ex, user) =>
+    val id = ex.getPathParameters.get("postId").peekFirst().toInt
+    ex.getRequestReceiver.receiveFullString{
+      (ex2: HttpServerExchange, message: String) =>
+        SavingData.parseFrom(message) match {
+          case None => setResponse(ex2, "save failed", StatusCodes.BAD_REQUEST)
+          case Some(data) =>
+            repo.updatePost(id, data)
+            setResponse(ex2, "save succeed", StatusCodes.OK)
+        }
+    }
+  }
+
+  private[this] val newTagHandler: HttpHandler = authenticated{ (ex, user) =>
+    val tm = ex.getAttachment(PathTemplateMatch.ATTACHMENT_KEY)
+    val name = tm.getParameters.get("tagName")
+    setResponse(ex, repo.addNewTag(name).toString, StatusCodes.OK)
   }
 
   private[this] val loginFormHandler: HttpHandler = ex => {
@@ -106,8 +122,10 @@ class AdminPageHandler(
       .get("/logout", logoutHandler)
       .get("/new", newPostHandler)
       .get("/edit/{postId}", editPostHandler)
+      .post("/edit/{postId}", updatePostHandler)
       .post("/edit", savePostHandler)
       .post("/login", formParsed(loginFormHandler))
+      .put("/tag/{tagName}", newTagHandler)
 
     import io.undertow.server.session.InMemorySessionManager
     import io.undertow.server.session.SessionCookieConfig

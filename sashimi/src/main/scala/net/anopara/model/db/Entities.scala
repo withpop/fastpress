@@ -10,7 +10,7 @@ import net.anopara.model.SashimiSettings
 import scala.collection.mutable
 
 case class Post(
-  id: Long,
+  id: Long = 0,
   title: String,
   content: String,
   pathName: String,
@@ -18,18 +18,11 @@ case class Post(
   author: String,
   postType: String,
   attribute: String,
-  createdAt: LocalDateTime,
-  updatedAt: LocalDateTime
+  postedAt: LocalDateTime = LocalDateTime.of(1900, 1, 1, 1, 0, 0),
+  createdAt: LocalDateTime = LocalDateTime.of(1900, 1, 1, 1, 0, 0),
+  updatedAt: LocalDateTime = LocalDateTime.of(1900, 1, 1, 1, 0, 0)
 ) {
-  implicit val TimestampFormat : Encoder[LocalDateTime] with Decoder[LocalDateTime] =
-    new Encoder[LocalDateTime] with Decoder[LocalDateTime] {
-    override def apply(a: LocalDateTime): Json =
-      Encoder.encodeLong.apply(a.atZone(ZoneId.systemDefault()).toInstant.toEpochMilli)
-    override def apply(c: HCursor): Result[LocalDateTime] =
-      Decoder.decodeLong.map(s => Instant.ofEpochMilli(s)
-        .atZone(ZoneId.systemDefault()).toLocalDateTime).apply(c)
-  }
-
+  import net.anopara.util.CircleEncoderDecoder._
   lazy val url: String = postType match {
     case "post" => "/post/" + pathName
     case "page" => "/page/" + pathName
@@ -47,11 +40,11 @@ case class PostTaxonomy(
 )
 
 case class Taxonomy(
-  id: Long,
-  parentId: Long,
+  id: Long = 0,
+  parentId: Long = 0,
   name: String,
   taxoType: String,
-  link: Option[String]
+  link: Option[String] = None
 )
 
 class PostTaxonomyData(

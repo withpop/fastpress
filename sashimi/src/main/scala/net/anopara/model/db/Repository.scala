@@ -4,6 +4,7 @@ import java.time.{LocalDate, LocalDateTime}
 
 import io.getquill._
 import net.anopara.model.PostType
+import net.anopara.model.console.SavingData
 import net.anopara.model.service.SashimiCache
 import org.mindrot.jbcrypt.BCrypt
 
@@ -18,6 +19,72 @@ class Repository(sashimiCache: SashimiCache) {
 
   val date = quote {
     (i: LocalDateTime) => infix"DATE($i)".as[LocalDate]
+  }
+
+  def addNewTag(name: String): Long = {
+    val t = Taxonomy(name = name, taxoType = "tag")
+    val p = quote {
+      query[Taxonomy].insert(lift(t)).returning(_.id)
+    }
+    ctx.run(p)
+  }
+
+  def updatePost(id: Long, data: SavingData): Unit = {
+    ctx.transaction {
+      val p = quote {
+        val p = lift(data.toPost)
+        infix"""update post set title = ${p.title}, content = ${p.content}, path_name = ${p.pathName},
+                status = ${p.status}, post_type = ${p.postType}, attribute = ${p.attribute}, posted_at = ${p.postedAt}
+                where post.id = ${p.id}
+           """.as[Update[Long]]
+      }
+      ctx.run(p)
+
+      val newPostId = ctx.run(quote{
+        infix"SELECT LAST_INSERT_ID()".as[Query[Long]]
+      }).head
+
+      ctx.run(quote {
+        query[PostTaxonomy].filter(_.postId == lift(id)).delete
+      })
+
+      ctx.run(quote {
+        liftQuery(data.toPostTaxonomy(newPostId)).foreach(e => query[PostTaxonomy].insert(e))
+      })
+    }
+  }
+
+  def savePost(data: SavingData): Long = {
+    ctx.transaction {
+      val p = quote {
+        val p = lift(data.toPost)
+        infix"""insert into post(title, content, path_name, status, post_type, attribute, posted_at)
+             value (${p.title}, ${p.content}, ${p.pathName}, ${p.status}, ${p.postType}, ${p.attribute}, ${p.postedAt})
+           """.as[Insert[Long]]
+      }
+      ctx.run(p)
+      val newPostId = ctx.run(quote{
+        infix"SELECT LAST_INSERT_ID()".as[Query[Long]]
+      }).head
+
+      val pt = quote {
+        liftQuery(data.toPostTaxonomy(newPostId)).foreach(e => query[PostTaxonomy].insert(e))
+      }
+      ctx.run(pt)
+
+      /*val t = quote {
+        liftQuery(data.newTaxonomies).map(e => query[Taxonomy].insert(e).returning(_.id))
+      }
+      val newTaxoIds = ctx.run(pt)
+
+      val newTags = newTaxoIds.map(PostTaxonomy(newPostId, _))
+      val nt = quote {
+        liftQuery(data.newTaxonomies).map(e => query[Taxonomy].insert(e).returning(_.id))
+      }
+      ctx.run(nt)*/
+
+      newPostId
+    }
   }
 
   def getUser(userid: String, pass: String): Option[User] = {
@@ -40,14 +107,14 @@ class Repository(sashimiCache: SashimiCache) {
     ctx.run(q)
   }
 
-  def getPost(postId: Int): Option[Post] = {
+  def getPost(postId: Long): Option[Post] = {
     val q = quote {
       query[Post].filter(_.id == lift(postId))
     }
     ctx.run(q).headOption
   }
 
-  def getRenderDataNonCache(postId: Int): Option[RenderDataSet] = {
+  def getRenderDataNonCache(postId: Long): Option[RenderDataSet] = {
     val maybeElement = {
       val q = quote {
         query[Post].filter(p => p.id == lift(postId))

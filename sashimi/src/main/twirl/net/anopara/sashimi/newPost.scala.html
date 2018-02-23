@@ -23,7 +23,7 @@
                             <el-input name="permalink" placeholder="Link path" v-model="pathName" required></el-input></div>
                         <div class="form-group"> <label>Post date</label>
                             <el-date-picker
-                            v-model="form.createdAt"
+                            v-model="form.postedAt"
                             type="datetime"
                             placeholder="Post date">
                             </el-date-picker>
@@ -99,7 +99,7 @@
             });
             let post = JSON.parse(`@Html(ren.post.toJsonString)`);
             post.form = {};
-            post.form.createdAt = new Date(post.createdAt);
+            post.form.postedAt = new Date(post.postedAt);
             post.form.updatedAt = new Date(post.updatedAt);
             post.message = "";
 
@@ -125,27 +125,41 @@
                                 $("#message").fadeOut(400, () => { post.message = ""; });
                             }, 4000);
                         }
+                    },
+                    tags : {
+                        handler: (newMsg, oldMsg) => {
+                            newMsg.selected.filter(i => !i.value).forEach(i => {
+                                axios.put("/admin/tag/" + i.label).then(id => {
+                                    i.value = id.data;
+                                }).catch(r => console.error(r))
+                            })
+                        },
+                        deep: true
                     }
                 },
                 methods: {
                     save: (context) => {
                         let saveObj = {};
                         saveObj.title = post.title;
+                        saveObj.postType = post.postType;
                         saveObj.category = post.categories.selected;
                         saveObj.pathName = post.pathName;
-                        saveObj.tags = post.tags.selected.map(t => {
-                            if(t.value)
-                                return t.value;
-                            else
-                                return t.label;
-                        });
-                        saveObj.createdAt = post.form.createdAt.getSeconds();
+                        saveObj.tags = post.tags.selected.filter(t => t.value).map(t => t.value);
+                        saveObj.postedAt = post.form.postedAt.getTime();
                         saveObj.status = post.status;
                         saveObj.attribute = post.attribute;
                         saveObj.body = simplemde.value();
 
                         console.log(saveObj);
-                        post.message = "Saved.";
+                        axios.post('/admin/edit', saveObj)
+                                .then(function (response) {
+                                    console.log(response);
+                                    post.message = "Saved.";
+                                })
+                                .catch(function (error) {
+                                    console.log(error);
+                                    post.message = "Save failed.";
+                                });
                     },
                     preview: (context) => {
                         console.log(context);
