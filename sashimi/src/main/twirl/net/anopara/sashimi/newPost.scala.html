@@ -125,41 +125,38 @@
                                 $("#message").fadeOut(400, () => { post.message = ""; });
                             }, 4000);
                         }
-                    },
-                    tags : {
-                        handler: (newMsg, oldMsg) => {
-                            newMsg.selected.filter(i => !i.value).forEach(i => {
-                                axios.put("/admin/tag/" + i.label).then(id => {
-                                    i.value = id.data;
-                                }).catch(r => console.error(r))
-                            })
-                        },
-                        deep: true
                     }
                 },
                 methods: {
                     save: (context) => {
-                        let saveObj = {};
-                        saveObj.title = post.title;
-                        saveObj.postType = post.postType;
-                        saveObj.category = post.categories.selected;
-                        saveObj.pathName = post.pathName;
-                        saveObj.tags = post.tags.selected.filter(t => t.value).map(t => t.value);
-                        saveObj.postedAt = post.form.postedAt.getTime();
-                        saveObj.status = post.status;
-                        saveObj.attribute = post.attribute;
-                        saveObj.body = simplemde.value();
+                        let promises = post.tags.selected.filter(i => !i.value).map(i => {
+                            axios.put("/admin/tag/" + i.label).then(id => {
+                                i.value = id.data;
+                            }).catch(r => console.error(r))
+                        });
+                        axios.all(promises).then((_) => {
+                            let saveObj = {};
+                            saveObj.title = post.title;
+                            saveObj.postType = post.postType;
+                            saveObj.category = post.categories.selected;
+                            saveObj.pathName = post.pathName;
+                            saveObj.tags = post.tags.selected.filter(t => t.value).map(t => t.value);
+                            saveObj.postedAt = post.form.postedAt.getTime();
+                            saveObj.status = post.status;
+                            saveObj.attribute = post.attribute;
+                            saveObj.body = simplemde.value();
 
-                        console.log(saveObj);
-                        axios.post('/admin/edit', saveObj)
-                                .then(function (response) {
-                                    console.log(response);
-                                    post.message = "Saved.";
-                                })
-                                .catch(function (error) {
-                                    console.log(error);
-                                    post.message = "Save failed.";
-                                });
+                            console.log(saveObj);
+                            axios.post('/admin/edit', saveObj)
+                                    .then(function (response) {
+                                        console.log(response);
+                                        post.message = "Saved.";
+                                    })
+                                    .catch(function (error) {
+                                        console.log(error);
+                                        post.message = "Save failed.";
+                                    });
+                        });
                     },
                     preview: (context) => {
                         console.log(context);
