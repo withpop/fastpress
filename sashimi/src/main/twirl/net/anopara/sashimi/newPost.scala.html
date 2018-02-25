@@ -93,76 +93,85 @@
         <link rel="stylesheet" href="@admin.route("/assets/sashimi/ext/sparksuite-simplemde-markdown-editor-6abda7a/dist/simplemde.min.css")">
         <script src="@admin.route("/assets/sashimi/ext/sparksuite-simplemde-markdown-editor-6abda7a/dist/simplemde.min.js")" type="text/javascript" charset="utf-8"></script>
         <script>
-            const simplemde = new SimpleMDE({
-                spellChecker: false,
-                autoDownloadFontAwesome: false
-            });
-            let post = JSON.parse(`@Html(ren.post.toJsonString)`);
-            post.form = {};
-            post.form.postedAt = new Date(post.postedAt);
-            post.form.updatedAt = new Date(post.updatedAt);
-            post.message = "";
+                const simplemde = new SimpleMDE({
+                    spellChecker: false,
+                    autoDownloadFontAwesome: false
+                });
+                const post = JSON.parse(`@Html(ren.post.toJsonString)`);
+                post.form = {};
+                post.form.postedAt = new Date(post.postedAt);
+                post.form.updatedAt = new Date(post.updatedAt);
+                post.message = "";
 
-            post.categories = {
-                list : JSON.parse(`@Html(categories.map(_.toJsonString).mkString("[", ",", "]"))`),
-                selected : "@ren.category.map(_.id)"
-            };
+                post.categories = {
+                    list : JSON.parse(`@Html(categories.map(_.toJsonString).mkString("[", ",", "]"))`),
+                    selected : "@ren.category.map(_.id)"
+                };
 
-            // TODO
-            post.tags = {
-                list: JSON.parse(`@Html(tags.map(_.toVSelectJsonString).mkString("[", ",", "]"))`),
-                selected : @if(ren.tags.isEmpty) { [] } else { @ren.tags.map(_.id).mkString(",") }
-            };
-            let vm = new Vue({
-                el: "#vue-app",
-                data: post,
-                watch: {
-                    message: (newMsg, oldMsg) => {
-                        this.message = newMsg;
-                        if(newMsg !== ""){
-                            $("#message").fadeIn();
-                            setTimeout(() => {
-                                $("#message").fadeOut(400, () => { post.message = ""; });
-                            }, 4000);
+                post.tags = {
+                    list: JSON.parse(`@Html(tags.map(_.toVSelectJsonString).mkString("[", ",", "]"))`),
+                    selected : @if(ren.tags.isEmpty) { [] } else { @ren.tags.map(_.id).mkString(",") }
+                };
+
+                const replaceUrlToEdit = (id) => {
+                    history.replaceState('', null, '/admin/edit/' + id);
+                };
+
+                const save = () => {
+                    const saveObj = {};
+                    saveObj.title = post.title;
+                    saveObj.postType = post.postType;
+                    saveObj.category = post.categories.selected;
+                    saveObj.pathName = post.pathName;
+                    saveObj.tags = post.tags.selected.filter(t => t.value).map(t => t.value);
+                    saveObj.postedAt = post.form.postedAt.getTime();
+                    saveObj.status = post.status;
+                    saveObj.attribute = post.attribute;
+                    saveObj.body = simplemde.value();
+
+                    axios.post(location.href, saveObj)
+                            .then(function (response) {
+                                console.log(response);
+                                if(location.href.endsWith("new"))
+                                    replaceUrlToEdit(response.data);
+                                post.message = "Saved.";
+                            })
+                            .catch(function (error) {
+                                console.log(error);
+                                post.message = "Save failed.";
+                            });
+                };
+
+                const vm = new Vue({
+                    el: "#vue-app",
+                    data: post,
+                    watch: {
+                        message: (newMsg, oldMsg) => {
+                            this.message = newMsg;
+                            if(newMsg !== ""){
+                                $("#message").fadeIn();
+                                setTimeout(() => {
+                                    $("#message").fadeOut(400, () => { post.message = ""; });
+                                }, 4000);
+                            }
+                        }
+                    },
+                    methods: {
+                        save: (context) => {
+                            let promises = post.tags.selected.filter(i => !i.value).map(i => {
+                                return axios.put("/admin/tag/" + i.label).then(id => {
+                                    i.value = id.data;
+                                }).catch(r => console.error(r));
+                            });
+                            axios.all(promises).then(x => {
+                                save();
+                            });
+                        },
+                        preview: (context) => {
+                            console.log(context);
                         }
                     }
-                },
-                methods: {
-                    save: (context) => {
-                        let promises = post.tags.selected.filter(i => !i.value).map(i => {
-                            axios.put("/admin/tag/" + i.label).then(id => {
-                                i.value = id.data;
-                            }).catch(r => console.error(r))
-                        });
-                        axios.all(promises).then((_) => {
-                            let saveObj = {};
-                            saveObj.title = post.title;
-                            saveObj.postType = post.postType;
-                            saveObj.category = post.categories.selected;
-                            saveObj.pathName = post.pathName;
-                            saveObj.tags = post.tags.selected.filter(t => t.value).map(t => t.value);
-                            saveObj.postedAt = post.form.postedAt.getTime();
-                            saveObj.status = post.status;
-                            saveObj.attribute = post.attribute;
-                            saveObj.body = simplemde.value();
-
-                            console.log(saveObj);
-                            axios.post('/admin/edit', saveObj)
-                                    .then(function (response) {
-                                        console.log(response);
-                                        post.message = "Saved.";
-                                    })
-                                    .catch(function (error) {
-                                        console.log(error);
-                                        post.message = "Save failed.";
-                                    });
-                        });
-                    },
-                    preview: (context) => {
-                        console.log(context);
-                    }
-                }
-            });
+                });
         </script>
     }
 }

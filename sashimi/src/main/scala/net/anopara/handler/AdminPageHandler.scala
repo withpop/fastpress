@@ -52,7 +52,7 @@ class AdminPageHandler(
     setResponse(ex, newPost(new AdminPageDataSet(user, settings), render, repo.getTags, repo.getCategories).body)
   }
 
-  private[this] val editPostHandler: HttpHandler = authenticated{ (ex, user) =>
+  private[this] val editPagePostHandler: HttpHandler = authenticated{ (ex, user) =>
     val id = ex.getPathParameters.get("postId").peekFirst().toInt
     repo.getRenderDataNonCache(id) match {
       case None =>
@@ -68,8 +68,8 @@ class AdminPageHandler(
         SavingData.parseFrom(message) match {
         case None => setResponse(ex2, "save failed", StatusCodes.BAD_REQUEST)
         case Some(data) =>
-          repo.savePost(data)
-          setResponse(ex2, "save succeed", StatusCodes.OK)
+          val id = repo.savePost(data)
+          setResponse(ex2, id.toString, StatusCodes.OK)
       }
     }
   }
@@ -121,7 +121,7 @@ class AdminPageHandler(
       .get("/login", loginPageHandler)
       .get("/logout", logoutHandler)
       .get("/new", newPostHandler)
-      .get("/edit/{postId}", editPostHandler)
+      .get("/edit/{postId}", editPagePostHandler)
       .post("/edit/{postId}", updatePostHandler)
       .post("/edit", savePostHandler)
       .post("/login", formParsed(loginFormHandler))
