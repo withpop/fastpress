@@ -21,7 +21,7 @@ case class SavingData(
     content = body,
     pathName = pathName,
     status = status,
-    author = "", // TODO
+    author = None, // TODO
     postType = postType,
     attribute = attribute,
     postedAt = postedAt,

@@ -15,7 +15,7 @@ case class Post(
   content: String,
   pathName: String,
   status: String,
-  author: String,
+  author: Option[String],
   postType: String,
   attribute: String,
   postedAt: LocalDateTime = LocalDateTime.of(1900, 1, 1, 1, 0, 0),
@@ -23,7 +23,7 @@ case class Post(
   updatedAt: LocalDateTime = LocalDateTime.of(1900, 1, 1, 1, 0, 0)
 ) {
   import net.anopara.util.CircleEncoderDecoder._
-  lazy val url: String = postType match {
+  def url: String = postType match {
     case "post" => "/post/" + pathName
     case "page" => "/page/" + pathName
   }

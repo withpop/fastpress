@@ -110,7 +110,7 @@
 
                 post.tags = {
                     list: JSON.parse(`@Html(tags.map(_.toVSelectJsonString).mkString("[", ",", "]"))`),
-                    selected : @if(ren.tags.isEmpty) { [] } else { @ren.tags.map(_.id).mkString(",") }
+                    selected : @Html(ren.tags.map(t => s"{label:'${t.name}',value:${t.id}}").mkString("[", ",", "]"))
                 };
 
                 const replaceUrlToEdit = (id) => {

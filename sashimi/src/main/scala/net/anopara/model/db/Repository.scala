@@ -33,23 +33,20 @@ class Repository(sashimiCache: SashimiCache) {
     ctx.transaction {
       val p = quote {
         val p = lift(data.toPost)
+        val i = lift(id)
         infix"""update post set title = ${p.title}, content = ${p.content}, path_name = ${p.pathName},
                 status = ${p.status}, post_type = ${p.postType}, attribute = ${p.attribute}, posted_at = ${p.postedAt}
-                where post.id = ${p.id}
+                where post.id = $i
            """.as[Update[Long]]
       }
       ctx.run(p)
-
-      val newPostId = ctx.run(quote{
-        infix"SELECT LAST_INSERT_ID()".as[Query[Long]]
-      }).head
 
       ctx.run(quote {
         query[PostTaxonomy].filter(_.postId == lift(id)).delete
       })
 
       ctx.run(quote {
-        liftQuery(data.toPostTaxonomy(newPostId)).foreach(e => query[PostTaxonomy].insert(e))
+        liftQuery(data.toPostTaxonomy(id)).foreach(e => query[PostTaxonomy].insert(e))
       })
     }
   }
@@ -71,17 +68,6 @@ class Repository(sashimiCache: SashimiCache) {
         liftQuery(data.toPostTaxonomy(newPostId)).foreach(e => query[PostTaxonomy].insert(e))
       }
       ctx.run(pt)
-
-      /*val t = quote {
-        liftQuery(data.newTaxonomies).map(e => query[Taxonomy].insert(e).returning(_.id))
-      }
-      val newTaxoIds = ctx.run(pt)
-
-      val newTags = newTaxoIds.map(PostTaxonomy(newPostId, _))
-      val nt = quote {
-        liftQuery(data.newTaxonomies).map(e => query[Taxonomy].insert(e).returning(_.id))
-      }
-      ctx.run(nt)*/
 
       newPostId
     }

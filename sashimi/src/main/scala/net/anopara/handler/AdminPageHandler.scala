@@ -41,7 +41,7 @@ class AdminPageHandler(
       content = "",
       pathName = "",
       status = "draft",
-      author = user.userName,
+      author = Some(user.userName),
       postType = "post",
       attribute = "",
       postedAt = LocalDateTime.now(),
@@ -53,7 +53,8 @@ class AdminPageHandler(
   }
 
   private[this] val editPagePostHandler: HttpHandler = authenticated{ (ex, user) =>
-    val id = ex.getPathParameters.get("postId").peekFirst().toInt
+    val tm = ex.getAttachment(PathTemplateMatch.ATTACHMENT_KEY)
+    val id = tm.getParameters.get("postId").toInt
     repo.getRenderDataNonCache(id) match {
       case None =>
         setResponse(ex, "no such post", StatusCodes.NOT_FOUND)
@@ -62,7 +63,7 @@ class AdminPageHandler(
     }
   }
 
-  private[this] val savePostHandler: HttpHandler = authenticated{ (ex, user) =>
+  private[this] val saveNewPostHandler: HttpHandler = authenticated{ (ex, user) =>
     ex.getRequestReceiver.receiveFullString{
       (ex2: HttpServerExchange, message: String) =>
         SavingData.parseFrom(message) match {
@@ -75,7 +76,8 @@ class AdminPageHandler(
   }
 
   private[this] val updatePostHandler: HttpHandler = authenticated{ (ex, user) =>
-    val id = ex.getPathParameters.get("postId").peekFirst().toInt
+    val tm = ex.getAttachment(PathTemplateMatch.ATTACHMENT_KEY)
+    val id = tm.getParameters.get("postId").toInt
     ex.getRequestReceiver.receiveFullString{
       (ex2: HttpServerExchange, message: String) =>
         SavingData.parseFrom(message) match {
@@ -122,8 +124,8 @@ class AdminPageHandler(
       .get("/logout", logoutHandler)
       .get("/new", newPostHandler)
       .get("/edit/{postId}", editPagePostHandler)
+      .post("/new", saveNewPostHandler)
       .post("/edit/{postId}", updatePostHandler)
-      .post("/edit", savePostHandler)
       .post("/login", formParsed(loginFormHandler))
       .put("/tag/{tagName}", newTagHandler)
 
