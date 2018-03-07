@@ -10,6 +10,7 @@ import org.mindrot.jbcrypt.BCrypt
 
 class Repository(sashimiCache: SashimiCache) {
 
+
   val ctx = new MysqlJdbcContext(SnakeCase, "ctx")
   import ctx._
 
@@ -26,8 +27,38 @@ class Repository(sashimiCache: SashimiCache) {
     val p = quote {
       query[Taxonomy].insert(lift(t)).returning(_.id)
     }
-    ctx.run(p)
+    val r = ctx.run(p)
+    refreshTaxonomy()
+    r
   }
+
+  def addNewCategory(name: String): Long = {
+    val t = Taxonomy(name = name, taxoType = "category")
+    val p = quote {
+      query[Taxonomy].insert(lift(t)).returning(_.id)
+    }
+    val r = ctx.run(p)
+    refreshTaxonomy()
+    r
+  }
+
+  def addNewMenu(t: Taxonomy): Long = {
+    val p = quote {
+      query[Taxonomy].insert(lift(t)).returning(_.id)
+    }
+    val r = ctx.run(p)
+    refreshTaxonomy()
+    r
+  }
+
+  def deleteTaxonomy(id: Long) = {
+    val p = quote {
+      query[Taxonomy].filter(_.id == lift(id)).delete
+    }
+    ctx.run(p)
+    refreshTaxonomy()
+  }
+
 
   def updatePost(id: Long, data: SavingData): Unit = {
     ctx.transaction {
@@ -141,6 +172,7 @@ class Repository(sashimiCache: SashimiCache) {
   }
 
   def getMenu: List[Menu] = menuCache
+  def getFlatMenu: List[Menu] = menuCache
   def getTags: List[Tag] = tagCache
   def getCategories: List[Category] = categoryCache
 
@@ -150,17 +182,21 @@ class Repository(sashimiCache: SashimiCache) {
     categoryCache = fetchCategory()
   }
 
-  private def fetchMenu(): List[Menu] = {
+  private def fetchFlatMenu(): List[Menu] = {
     val q = quote {
       for{
-        (t, pt) <- query[Taxonomy].join(query[PostTaxonomy]).on(_.id == _.taxonomyId)
+        (t, pt) <- query[Taxonomy].filter(_.taxoType == "menu").join(query[PostTaxonomy]).on(_.id == _.taxonomyId)
         p <- query[Post].leftJoin(_.id == pt.postId)
       } yield (t, p)
     }
 
-    val menus = ctx.run(q).map{case (t, p) =>
+    ctx.run(q).map{case (t, p) =>
       new Menu(t.id, t.parentId, t.name, t.link.fold(p.map( x => x.url ))(x => Some(x)))
     }
+  }
+
+  private def fetchMenu(): List[Menu] = {
+    val menus = fetchFlatMenu()
     val list = menus.filter(_.parentId == 0)
     list.foreach{ t =>
       list

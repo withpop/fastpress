@@ -63,6 +63,10 @@ class AdminPageHandler(
     }
   }
 
+  private[this] val taxonomiesPageHandler: HttpHandler = authenticated{ (ex, user) =>
+    setResponse(ex, editTaxonomy(new AdminPageDataSet(user, settings), repo.getTags, repo.getCategories, repo.getFlatMenu).body)
+  }
+
   private[this] val saveNewPostHandler: HttpHandler = authenticated{ (ex, user) =>
     ex.getRequestReceiver.receiveFullString{
       (ex2: HttpServerExchange, message: String) =>
@@ -95,6 +99,30 @@ class AdminPageHandler(
     setResponse(ex, repo.addNewTag(name).toString, StatusCodes.OK)
   }
 
+  private[this] val newCategoryHandler: HttpHandler = authenticated{ (ex, user) =>
+    val tm = ex.getAttachment(PathTemplateMatch.ATTACHMENT_KEY)
+    val name = tm.getParameters.get("categoryName")
+    setResponse(ex, repo.addNewCategory(name).toString, StatusCodes.OK)
+  }
+
+  private[this] val newMenuHandler: HttpHandler = authenticated{ (ex, user) =>
+    ex.getRequestReceiver.receiveFullString{
+      (ex2: HttpServerExchange, message: String) =>
+        Taxonomy.parseFrom(message) match {
+          case None => setResponse(ex2, "save failed", StatusCodes.BAD_REQUEST)
+          case Some(data) =>
+            val id = repo.addNewMenu(data)
+            setResponse(ex2, id.toString, StatusCodes.OK)
+        }
+    }
+  }
+
+  private[this] val deleteTaxonomyHandler: HttpHandler = authenticated{ (ex, user) =>
+    val tm = ex.getAttachment(PathTemplateMatch.ATTACHMENT_KEY)
+    val id = tm.getParameters.get("id")
+    setResponse(ex, repo.deleteTaxonomy(id.toLong).toString, StatusCodes.OK)
+  }
+
   private[this] val loginFormHandler: HttpHandler = ex => {
     val session = Sessions.getOrCreateSession(ex)
     val form = ex.getAttachment(FormDataParser.FORM_DATA)
@@ -124,10 +152,14 @@ class AdminPageHandler(
       .get("/logout", logoutHandler)
       .get("/new", newPostHandler)
       .get("/edit/{postId}", editPagePostHandler)
+      .get("/taxonomies", taxonomiesPageHandler)
       .post("/new", saveNewPostHandler)
       .post("/edit/{postId}", updatePostHandler)
       .post("/login", formParsed(loginFormHandler))
       .put("/tag/{tagName}", newTagHandler)
+      .put("/category/{categoryName}", newCategoryHandler)
+      .put("/menu", newMenuHandler)
+      .delete("/taxonomy/{id}", deleteTaxonomyHandler)
 
     import io.undertow.server.session.InMemorySessionManager
     import io.undertow.server.session.SessionCookieConfig

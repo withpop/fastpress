@@ -2,10 +2,9 @@ package net.anopara.model.db
 
 import java.time.{Instant, LocalDateTime, ZoneId}
 
-import io.circe.Decoder.Result
-import io.circe.generic.semiauto.deriveEncoder
-import io.circe.{Decoder, Encoder, HCursor, Json}
+import io.circe.Encoder
 import net.anopara.model.SashimiSettings
+import net.anopara.model.console.SavingData
 
 import scala.collection.mutable
 
@@ -47,6 +46,18 @@ case class Taxonomy(
   link: Option[String] = None
 )
 
+object Taxonomy {
+
+  def parseFrom(message: String): Option[Taxonomy] = {
+    import io.circe._
+    import io.circe.generic.auto._
+    import shapeless.Witness
+    import shapeless.labelled.{FieldType, field}
+
+    parser.decode[(FieldType[Witness.`'id`.T, Long], FieldType[Witness.`'taxoType`.T, String]) => Taxonomy](message).map(_(field(0), field("menu"))).toOption
+  }
+}
+
 class PostTaxonomyData(
   val post: Post,
   val taxonomies: List[Taxonomy]
@@ -81,6 +92,10 @@ class Menu(
 ) {
   def this(taxonomy: Taxonomy){
     this(taxonomy.id, taxonomy.parentId, taxonomy.name, taxonomy.link)
+  }
+
+  def toJsonString: String = {
+    s"""{"id":$id,"parentId":$parentId,"name":"$name"}"""
   }
 }
 

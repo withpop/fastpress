@@ -1,0 +1,207 @@
+@import net.anopara.model.db._
+@import net.anopara.sashimi.html._
+@import play.twirl.api.Html
+@(admin: AdminPageDataSet, tags: List[Tag], categories: List[Category], menus: List[Menu])
+@main("Taxonomies", admin){
+    @sidemenu(admin){
+        <div id="vue-app">
+            <h2>Tags</h2>
+            <input class="form-control" v-on:keyup.enter="addTag()" id="newTag" placeholder="New tag" />
+            <table class="table table-bordered" style="margin-top: 20px;">
+                <thead>
+                    <tr class="d-flex">
+                        <th class="col-8">Name</th>
+                        <th class="col-4">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="d-flex" v-for="tag in tags">
+                        <td class="col-8">{{tag.name}}</td>
+                        <td class="col-4">
+                            <button type="button" class="btn btn-success">Edit</button>
+                            <button type="button" class="btn btn-danger" v-if="!tag.confirm" v-on:click="confirmTagDelete(tag)">Delete</button>
+                            <span v-if="tag.confirm">
+                                Sure?
+                                <button type="button" class="btn btn-danger" v-on:click="deleteTaxonomy(tag)">OK</button>
+                                <button type="button" class="btn btn-light" v-on:click="tag.confirm = false">Cancel</button>
+                            </span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h2>Categories</h2>
+            <input class="form-control" v-on:keyup.enter="addCategory()" id="newCategory" placeholder="New category" />
+            <table class="table table-bordered" style="margin-top: 20px;">
+                <thead>
+                    <tr class="d-flex">
+                        <th class="col-8">Name</th>
+                        <th class="col-4">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="d-flex" v-for="c in categories">
+                        <td class="col-8">{{c.name}}</td>
+                        <td class="col-4">
+                            <button type="button" class="btn btn-success">Edit</button>
+                            <button type="button" class="btn btn-danger" v-if="!c.confirm" v-on:click="confirmCategoryDelete(c)">Delete</button>
+                            <span v-if="c.confirm">
+                                Sure?
+                                <button type="button" class="btn btn-danger" v-on:click="deleteTaxonomy(tag)">OK</button>
+                                <button type="button" class="btn btn-light" v-on:click="c.confirm = false">Cancel</button>
+                            </span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h2>Menus</h2>
+            <div class="form-row form-inline">
+                <div class="form-group">
+                    <label>Parent</label>
+                    <select id="newMenuParent" class="form-control">
+                        <option value="0">Root</option>
+                        <option v-for="c in menus" value="c.id">{{c.name}}</option>
+                    </select>
+                    <input class="form-control" v-on:keyup.enter="addMenu()" id="newMenuLink" placeholder="Menu link (optional)" />
+                    <input class="form-control" v-on:keyup.enter="addMenu()" id="newMenuName" placeholder="New menu" />
+                </div>
+            </div>
+            <table class="table table-bordered" style="margin-top: 20px;">
+                <thead>
+                    <tr class="d-flex">
+                        <th class="col-3">Name</th>
+                        <th class="col-3">Parent</th>
+                        <th class="col-3">Link</th>
+                        <th class="col-3">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="d-flex" v-for="c in menus">
+                        <td class="col-3">{{c.name}}</td>
+                        <td class="col-3">{{c.parentId == 0 ? '-' : menuMap[c.parentId].name}}</td>
+                        <td class="col-3">{{c.link ? '-' : c.link}}</td>
+                        <td class="col-3">
+                            <button type="button" class="btn btn-success">Edit</button>
+                            <button type="button" class="btn btn-danger" v-if="c.confirm" v-on:click="confirmMenuDelete(c)">Delete</button>
+                            <span v-if="c.confirm">
+                                Sure?
+                                <button type="button" class="btn btn-danger" v-on:click="deleteTaxonomy(tag)">OK</button>
+                                <button type="button" class="btn btn-light" v-on:click="c.confirm = false">Cancel</button>
+                            </span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="modal fade" id="errorModal" tabindex="-1" role="dialog" aria-labelledby="basicModal" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-body">
+                        {{model.modalMessage}}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script>
+                let model = {
+                    categories : JSON.parse(`@Html(categories.map(_.toJsonString).mkString("[", ",", "]"))`),
+                    tags: JSON.parse(`@Html(tags.map(_.toJsonString).mkString("[", ",", "]"))`),
+                    menus: JSON.parse(`@Html(menus.map(_.toJsonString).mkString("[", ",", "]"))`),
+                    deleteTag: null,
+                    deleteCategory: null,
+                    deleteMenu: null,
+                    modalMessage: ""
+                };
+                model.menuMap = {};
+                model.menus.forEach((m) => model.menuMap[m.id] = m );
+
+                model.menus.forEach((e) => e.confirm = false );
+                model.categories.forEach((e) => e.confirm = false );
+                model.tags.forEach((e) => e.confirm = false );
+
+                function showError(msg) {
+                    model.modalMessage = msg;
+                    $('#errorModal').modal("show")
+                }
+
+                let app = new Vue({
+                    el: '#vue-app',
+                    data: model,
+                    methods: {
+                        confirmTagDelete(e) {
+                            e.confirm = true;
+                        },
+                        confirmCategoryDelete(e) {
+                            e.confirm = true;
+                        },
+                        confirmMenuDelete(e) {
+                            if(model.menus.some((x) => x.parentId === e.id))
+                                showError("Please delete all child menus before delete this item.");
+                            else
+                                e.confirm = true;
+                        },
+                        deleteTaxonomy(e) {
+                            axios.delete("/admin/taxonomy/" + e.id)
+                                    .then(() => {
+                                        e.confirm = false;
+                                        let t = this.tags.indexOf(e);
+                                        this.tags.splice(t, 1);
+                                        let m = this.menus.indexOf(e);
+                                        this.menus.splice(m, 1);
+                                        let c = this.categories.indexOf(e);
+                                        this.categories.splice(c, 1);
+                                    })
+                                    .catch((e) => console.error(e))
+                        },
+                        addTag() {
+                            let name = document.getElementById('newTag').value;
+                            axios.put("/admin/tag/" + name).then(res => {
+                                let v = {
+                                    id: parseInt(res.data),
+                                    name: name
+                                };
+                                model.tags.push(v);
+                                document.getElementById('newTag').value = null;
+                            })
+                                    .catch((e) => console.error(e))
+                        },
+                        addCategory() {
+                            let name = document.getElementById('newCategory').value;
+                            axios.put("/admin/category/" + name).then(res => {
+                                let v = {
+                                    id: parseInt(res.data),
+                                    name: name
+                                };
+                                model.categories.push(v);
+                                document.getElementById('newCategory').value = null;
+                            })
+                                    .catch((e) => console.error(e))
+                        },
+                        addMenu() {
+                            let v = {
+                                parentId: document.getElementById('newMenuParent').selectedIndex,
+                                name: document.getElementById('newMenuName').value,
+                                link: document.getElementById('newMenuLink').value
+                            };
+                            if(!v.name) {
+                                showError("Please input name.");
+                            }
+                            axios.put("/admin/menu", v).then(res => {
+                                v.id = parseInt(res.data);
+                                model.menus.push(v);
+                                document.getElementById('newMenuName').value = null;
+                                document.getElementById('newMenuLink').value = null;
+                            })
+                                    .catch((e) => console.error(e))
+                        }
+                    }
+                })
+
+        </script>
+    }
+}
