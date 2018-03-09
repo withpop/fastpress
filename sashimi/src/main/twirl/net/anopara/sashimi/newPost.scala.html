@@ -85,18 +85,30 @@
         <div class="container-fluid">
             <div class="panel panel-default">
                 <div class="panel-body">
-                    <textarea>@ren.post.content</textarea>
+                    <div id="editSection"></div>
                 </div>
             </div>
         </div>
 
+        <script src="@admin.route("/assets/sashimi/ext/tui.editor/lib/markdown-it/dist/markdown-it.js")" type="text/javascript"></script>
+        <script src="@admin.route("/assets/sashimi/ext/tui.editor/lib/to-mark/dist/to-mark.js")" type="text/javascript"></script>
+        <script src="@admin.route("/assets/sashimi/ext/tui.editor/lib/tui-code-snippet/dist/tui-code-snippet.js")" type="text/javascript"></script>
+        <script src="@admin.route("/assets/sashimi/ext/tui.editor/lib/codemirror/lib/codemirror.js")" type="text/javascript"></script>
+        <script src="@admin.route("/assets/sashimi/ext/tui.editor/lib/highlightjs/highlight.pack.js")" type="text/javascript"></script>
+        <script src="@admin.route("/assets/sashimi/ext/tui.editor/lib/squire-rte/build/squire-raw.js")" type="text/javascript"></script>
+        <script src="@admin.route("/assets/sashimi/ext/tui.editor/lib/tui-editor/dist/tui-editor-Editor.js")" type="text/javascript"></script>
+        <link rel="stylesheet" media="screen" href="@admin.route("/assets/sashimi/ext/tui.editor/lib/codemirror/lib/codemirror.css")">
+        <link rel="stylesheet" media="screen" href="@admin.route("/assets/sashimi/ext/tui.editor/lib/highlightjs/styles/github.css")">
+        <link rel="stylesheet" media="screen" href="@admin.route("/assets/sashimi/ext/tui.editor/lib/tui-editor/dist/tui-editor.css")">
+        <link rel="stylesheet" media="screen" href="@admin.route("/assets/sashimi/ext/tui.editor/lib/tui-editor/dist/tui-editor-contents.css")">
+
+        <script src="@admin.route("/assets/sashimi/ext/tui.editor/dist/tui-editor-Editor.min.js")" type="text/javascript"></script>
+        <link rel="stylesheet" media="screen" href="@admin.route("/assets/sashimi/ext/tui.editor/dist/tui-editor.min.css")">
+        <link rel="stylesheet" media="screen" href="@admin.route("/assets/sashimi/ext/tui.editor/dist/tui-editor-contents.min.css")">
+
         <link rel="stylesheet" href="@admin.route("/assets/sashimi/ext/sparksuite-simplemde-markdown-editor-6abda7a/dist/simplemde.min.css")">
         <script src="@admin.route("/assets/sashimi/ext/sparksuite-simplemde-markdown-editor-6abda7a/dist/simplemde.min.js")" type="text/javascript" charset="utf-8"></script>
         <script>
-                const simplemde = new SimpleMDE({
-                    spellChecker: false,
-                    autoDownloadFontAwesome: false
-                });
                 const post = JSON.parse(`@Html(ren.post.toJsonString)`);
                 post.form = {};
                 post.form.postedAt = new Date(post.postedAt);
@@ -127,7 +139,7 @@
                     saveObj.postedAt = post.form.postedAt.getTime();
                     saveObj.status = post.status;
                     saveObj.attribute = post.attribute;
-                    saveObj.body = simplemde.value();
+                    saveObj.body = editor.getMarkDown();
 
                     axios.post(location.href, saveObj)
                             .then(function (response) {
@@ -171,6 +183,14 @@
                             console.log(context);
                         }
                     }
+                });
+
+                const editor = new tui.Editor({
+                    el: document.querySelector('#editSection'),
+                    initialEditType: 'markdown',
+                    previewStyle: 'vertical',
+                    height: 'auto',
+                    initialValue: post.content
                 });
         </script>
     }
