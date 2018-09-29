@@ -30,7 +30,7 @@ class SashimiHandlerBuilder(
       x => {
         x.getResponseHeaders.put(Headers.CONTENT_TYPE, "text/plain")
         x.getResponseSender.send("Hello")
-        repo.addUser(User("debug", "dev user", BCrypt.hashpw("pass", BCrypt.gensalt()), "")) // TODO debug code
+        //repo.addUser(User("debug", "dev user", BCrypt.hashpw("pass", BCrypt.gensalt()), "")) // TODO debug code
       })
 
       // Public

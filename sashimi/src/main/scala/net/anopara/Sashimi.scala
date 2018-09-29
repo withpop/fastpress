@@ -28,6 +28,8 @@ object Sashimi {
     // Build server
     val server = Undertow.builder()
       .addHttpListener(settings.port, "localhost")
+      .setIoThreads(200)
+      .setWorkerThreads(400)
       .setHandler(new SashimiHandlerBuilder(settings, cache, repository, renderer, auth).build())
       .build()
 
